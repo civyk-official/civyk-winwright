@@ -219,6 +219,8 @@ winwright mcp                                    Start MCP server (stdio)
 winwright serve --port N                         Start MCP server (HTTP, default 8765)
 winwright run <script.json> [--format text|junit] [--output <file>]
                                                  Replay a recorded automation script
+winwright heal <script.json> [--app <path>|--pid <n>] [--output <file>] [--min-confidence <0-1>]
+                                                 Probe broken selectors against a live UI and repair them
 winwright inspect <pid>                          Dump UIA element tree for a process
 winwright doctor                                 Verify environment prerequisites
 ```

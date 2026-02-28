@@ -15,10 +15,8 @@ embeds assertions — and the recording is exported as a deterministic JSON scri
 The script runs in CI without an AI agent. The AI writes the test; the machine runs it.
 
 **What works today:** recording, in-session correction, script export in test and RPA modes,
-and standalone CI replay via `winwright run` (no AI agent required).
-
-**Roadmap:** selector fingerprinting (automatic UI-change resilience) and `winwright heal`
-(AI-assisted script repair when the UI changes significantly).
+standalone CI replay via `winwright run` (no AI agent required), and selector healing via
+`winwright heal` (probe broken selectors against a live UI and repair them automatically).
 
 ## Prerequisites
 
@@ -531,9 +529,9 @@ Healing is always logged because a renamed button may signal a real business log
 **With `--auto-heal`**, the runner writes the corrected selector back into the script file,
 so the next run uses the updated selector directly.
 
-### Layer 3 — AI-Assisted Heal Pass (Roadmap)
+### Layer 3 — Selector Heal Pass
 
-When the UI changes significantly and fingerprint fallbacks also fail, run:
+When the UI changes significantly and selector fallbacks also fail, run:
 
 ```bash
 winwright heal my-suite.json \
@@ -543,18 +541,25 @@ winwright heal my-suite.json \
 
 The healer:
 
-1. Launches the new app version
-2. For each broken step: takes a snapshot, uses the **test case title and step description**
-   as semantic context to locate the correct element in the new UI
-3. If found → updates selector + fingerprint, marks step as `HEALED`
-4. If not found → marks step as `NEEDS_REVIEW` with the nearest candidates listed
-5. Writes a healed script to the output file and prints a diff of all changed selectors
+1. Launches the app (or attaches to a running process via `--pid`)
+2. For each step that carries a selector: probes it with the live UI tree to check whether
+   it still resolves
+3. For any broken selector: performs fuzzy matching across all visible elements using
+   AutomationId similarity (Levenshtein) and Name similarity (Jaccard token overlap)
+4. Assigns one of four outcomes per step:
+   - **Ok** — selector still works; no change
+   - **Healed** — a match above the confidence threshold (default 0.70) was found;
+     selector updated automatically
+   - **Suggested** — best match is above 0.40 but below 0.70; candidates listed for
+     human review
+   - **Unresolvable** — no similar element found; manual intervention required
+5. Writes the healed script to `--output` and prints a summary to stderr
 
-`NEEDS_REVIEW` steps require a human decision — they may represent genuine workflow changes,
-not just renamed controls.
+Steps marked **Suggested** or **Unresolvable** require a human decision — they may
+represent genuine workflow changes, not just renamed controls.
 
-A single-step version is also available as an MCP tool: `ww_heal_script` — useful when
-you want the AI agent to fix one broken step without a full command-line heal pass.
+The same healing logic is also available as an MCP tool (`ww_heal_script`) so an AI agent
+can repair a specific script interactively without a full command-line pass.
 
 ## Tips
 
@@ -567,8 +572,10 @@ you want the AI agent to fix one broken step without a full command-line heal pa
 
 ## Limitations
 
-- Fingerprint capture (Layer 2 resilience) is on the roadmap
-- `winwright heal` (Layer 3) is on the roadmap
+- Fingerprint capture (Layer 2 resilience) is on the roadmap; `winwright heal` uses
+  fuzzy string matching today and does not yet store UI fingerprints between runs
+- The `winwright run` CLI runner is in development; script replay currently requires the
+  MCP agent or direct API integration
 
 ---
 
