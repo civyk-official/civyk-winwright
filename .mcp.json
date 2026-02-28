@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "winwright": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/bin/Civyk.WinWright.Mcp.exe",
+      "args": ["mcp"],
+      "env": {}
+    }
+  }
+}
