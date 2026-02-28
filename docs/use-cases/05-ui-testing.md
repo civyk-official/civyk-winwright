@@ -17,24 +17,19 @@ and asserts values using `ww_assert_value`. When the UI changes, the agent adapt
 
 ## Prerequisites
 
-- WinWright installed and configured as an MCP server (see [Quick Start](README.md#quick-start))
+- WinWright configured as an MCP server in your AI agent —
+  see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
 - The application under test must be a WinForms, WPF, or Win32 app with UIA-accessible controls
 
 ## Example: Test a WPF Login Flow
 
-### 1. Start WinWright
-
-```bash
-winwright mcp
-```
-
-### 2. Tell Your Agent
+### 1. Tell Your Agent
 
 > "Test the login page. Launch C:\TestApp\EmployeeApp.exe, enter username 'admin' and
 > password 'test123' in the login form, click Sign In, then verify the dashboard heading
 > contains 'Welcome'."
 
-### 3. Tool Sequence
+### 2. Tool Sequence
 
 The agent calls these tools in order:
 
@@ -141,7 +136,7 @@ Response:
 { "passed": true, "actualValue": "Welcome, Admin", "expectedValue": "Welcome", "op": "contains" }
 ```
 
-#### Capture a screenshot for the test report
+#### Capture a screenshot as test evidence
 
 ```json
 ww_screenshot
@@ -154,7 +149,7 @@ Response:
 { "format": "png", "dataBase64": "iVBORw0KGgo..." }
 ```
 
-### 4. Result
+### 3. Result
 
 The agent reports:
 

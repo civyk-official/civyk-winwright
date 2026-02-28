@@ -17,7 +17,8 @@ a form, and returns to the desktop — all in one conversation.
 
 ## Prerequisites
 
-- WinWright installed and configured as an MCP server
+- WinWright configured as an MCP server in your AI agent —
+  see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
 - For the browser phase: Chrome or Edge launched with remote debugging enabled.
 
   ```bat
@@ -28,18 +29,12 @@ a form, and returns to the desktop — all in one conversation.
 
 ## Example: Get an Order from ERP and Download Its Invoice from the Supplier Portal
 
-### 1. Start WinWright
-
-```bash
-winwright mcp
-```
-
-### 2. Tell Your Agent
+### 1. Tell Your Agent
 
 > "Get order #ORD-4821 from our ERP system and download its invoice PDF from the
 > supplier portal at `https://portal.example.com`. The ERP is already running as PID 7640."
 
-### 3. Tool Sequence
+### 2. Tool Sequence
 
 #### Phase 1 — Desktop: Read from the ERP
 
@@ -160,7 +155,7 @@ ww_browser_screenshot
   { }
 ```
 
-### 4. Result
+### 3. Result
 
 The agent reports:
 
@@ -173,7 +168,7 @@ The agent reports:
 - Both `app-erp1` (desktop) and the browser share the same WinWright session —
   switching between them is just a matter of which tool you call
 - If the browser opens a file-save dialog, WinWright can handle it:
-  see [Use Case 08 — Dialog Handling](08-dialog-handling.md)
+  see [Dialog and Modal Handling](11-dialog-handling.md)
 - You can interleave desktop and browser steps freely:
   "Read the customer email from the ERP, open Gmail in Chrome, and draft an email to that address"
 

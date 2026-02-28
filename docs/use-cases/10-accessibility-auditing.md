@@ -17,24 +17,19 @@ navigation paths, then generates a structured report of findings.
 
 ## Prerequisites
 
-- WinWright installed and configured as an MCP server
+- WinWright configured as an MCP server in your AI agent —
+  see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
 - The app to audit must be running or launchable
 
 ## Example: Audit a WPF Employee App
 
-### 1. Start WinWright
-
-```bash
-winwright mcp
-```
-
-### 2. Tell Your Agent
+### 1. Tell Your Agent
 
 > "Check this app for accessibility issues: unlabelled buttons, empty text field labels,
 > and controls unreachable by keyboard. Launch C:\TestApp\EmployeeApp.exe.
 > Give me a structured report of issues found."
 
-### 3. Tool Sequence
+### 2. Tool Sequence
 
 #### Launch the app
 
@@ -129,7 +124,7 @@ The agent presses Tab repeatedly and calls `ww_get_focused_element` after each p
 trace the tab order. If an interactive control is skipped (focus jumps over it),
 it is flagged as keyboard-unreachable.
 
-### 4. Agent Output
+### 3. Agent Output
 
 The agent produces a structured report:
 

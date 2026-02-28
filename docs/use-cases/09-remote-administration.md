@@ -14,11 +14,18 @@ WinWright's HTTP transport (`winwright serve --port 8765`) exposes all system to
 over MCP with a five-layer security model built in. An AI agent connects remotely
 and manages the machine through the same tool set used locally.
 
+**What works today:** HTTP transport (`winwright serve --port 8765`), all system tools
+accessible remotely, and JSONL audit logging.
+
+**In development:** IP allowlist, Windows Negotiate authentication, AD group authorization,
+rate limiting, per-user session limits, and TLS/HTTPS. The configuration examples below
+show the planned full security setup — enable only what has shipped in your version.
+
 ## Prerequisites
 
 - WinWright installed on the **remote** machine
-- `winwright.json` configured with IP allowlist, authentication, and AD group settings
-- Both machines must be on the same domain (for Kerberos) or in the same workgroup (NTLM)
+- `winwright.json` configured with `permissions` for the operations you want to allow
+- For authentication: both machines on the same domain (Kerberos) or workgroup (NTLM)
 
 ## Step 1 — Configure the Remote Machine
 

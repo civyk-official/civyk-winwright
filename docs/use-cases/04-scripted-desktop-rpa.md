@@ -26,7 +26,7 @@ Use Case 06 covers **test mode** — grouped test cases with pass/fail assertion
 This use case covers **RPA mode** — a flat step sequence with no test cases and no assertions.
 Use RPA mode when you want to automate a task, not verify an outcome.
 
-| | RPA Mode (this guide) | Test Mode (Use Case 06) |
+| | RPA Mode (this guide) | Test Mode (Use Case 01) |
 |---|---|---|
 | Purpose | Automate a repeatable task | Verify app behaviour |
 | Structure | Flat `steps[]` | `testCases[]` with grouped steps |
@@ -36,7 +36,8 @@ Use RPA mode when you want to automate a task, not verify an outcome.
 
 ## Prerequisites
 
-- WinWright installed and configured as an MCP server
+- WinWright configured as an MCP server in your AI agent —
+  see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
 - The task involves one or more Windows apps (desktop, with UIA-accessible controls)
 
 ## Example: Daily Report Export and Import
@@ -46,20 +47,14 @@ Use RPA mode when you want to automate a task, not verify an outcome.
 Every morning: open ReportingApp, export yesterday's sales report to a CSV, open
 ImportTool, load the CSV, and click Process.
 
-### 1. Start WinWright
-
-```bash
-winwright mcp
-```
-
-### 2. Tell Your Agent
+### 1. Tell Your Agent
 
 > "I want to automate this daily task. Start recording, then do the following:
 > Open C:\Tools\ReportingApp.exe, navigate to Sales Reports, set the date range
 > to yesterday, export to C:\daily-exports\sales.csv, then open C:\Tools\ImportTool.exe,
 > load that CSV, and click Process."
 
-### 3. Tool Sequence
+### 2. Tool Sequence
 
 #### Start recording (RPA mode — no test cases)
 
@@ -148,7 +143,7 @@ ww_click
   { "appId": "app-rpa2", "selector": "Name:Process" }
 ```
 
-### 4. Correct Any Mistakes
+### 3. Correct Any Mistakes
 
 If a wrong step was recorded:
 
@@ -157,10 +152,10 @@ ww_record_pop
   { "appId": "app-rpa1", "count": 1 }
 ```
 
-See [Use Case 06 — Part B: Correcting a Recording](06-scripted-ci.md#part-b-correcting-a-recording)
+See [Use Case 06 — Part B: Correcting a Recording](01-scripted-ci.md#part-b-correcting-a-recording)
 for the full set of correction patterns (they apply equally to RPA mode).
 
-### 5. Export the RPA Script
+### 4. Export the RPA Script
 
 ```json
 ww_export_script
@@ -175,7 +170,7 @@ Response:
 { "script": "{ ... }", "stepCount": 12, "assertionCount": 0 }
 ```
 
-### 6. Save the Script File
+### 5. Save the Script File
 
 > "Save the script to C:\scripts\daily-sales-import.json"
 
@@ -243,7 +238,7 @@ Exit codes: `0` = all steps completed, `1` = a step failed, `2` = crash or error
 - The standalone runner is in development — replay currently requires an agent
 - RPA scripts don't include assertions — if you need to verify the task completed
   correctly (e.g., "confirm the Process button shows 'Done'"), use test mode instead
-  (see [Use Case 06](06-scripted-ci.md))
+  (see [Use Case 06](01-scripted-ci.md))
 
 ---
 

@@ -17,8 +17,9 @@ service — all without modifying the application or adding instrumentation.
 
 ## Prerequisites
 
-- WinWright installed on the machine running the application
-- Use `winwright serve --port 8765` for scheduled/automated checks (HTTP mode)
+- WinWright configured as an MCP server —
+  see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
+- For scheduled/automated checks, use HTTP mode: `winwright serve --port 8765`
 - The app must expose status information via UIA-accessible controls
 
 ## Example: Health Check for an Order Management App
@@ -182,7 +183,7 @@ winwright serve --port 8765
 ```
 
 From a central monitoring machine, an agent (or script) connects via HTTP and runs the same
-checks. See [Use Case 07 — Remote Administration](07-remote-administration.md) for the
+checks. See [Use Case 09 — Remote Administration](09-remote-administration.md) for the
 full HTTP security setup.
 
 ### Option 3 — Pair with Alerting

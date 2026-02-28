@@ -7,17 +7,17 @@ Each guide is a self-contained tutorial you can follow from first command to res
 
 | # | Use Case | Summary |
 |---|----------|---------|
-| [01](01-ui-testing.md) | **AI-Powered UI Testing** | Discover controls by name/type, click and type, assert values — no brittle XPath selectors |
+| [01](01-scripted-ci.md) | **Scripted UI Test Automation for CI** | Record an AI session once, embed assertions, export a portable JSON script, replay in CI without an agent |
 | [02](02-desktop-automation.md) | **Autonomous Desktop Automation** | Fill forms, navigate menus, move data between apps using plain-language instructions |
 | [03](03-data-extraction.md) | **Legacy App Data Extraction** | Read grids and labels from apps with no API; paginate and batch-export to CSV |
-| [04](04-cross-app-workflows.md) | **Cross-App Workflows** | Span desktop and browser in one session — read ERP, submit web portal, download PDF |
-| [05](05-accessibility-auditing.md) | **Accessibility Auditing** | Traverse the full UIA element tree; report unlabelled buttons and broken tab order |
-| [06](06-scripted-ci.md) | **Scripted UI Test Automation for CI** | Record a session, embed assertions, export a portable JSON script, replay in CI |
-| [07](07-remote-administration.md) | **Remote Administration** | Manage processes, services, and registry on remote Windows machines over HTTP |
-| [08](08-dialog-handling.md) | **Dialog and Modal Handling** | Detect unexpected dialogs after every click; handle Save/Discard, file-save, MessageBox |
-| [09](09-bulk-data-validation.md) | **Bulk Data Validation** | Drive an app through 50+ records; compare each displayed value against a reference table |
-| [10](10-app-health-monitoring.md) | **Application Health Monitoring** | Verify a running app is responsive and connected; pair with Task Scheduler for scheduled checks |
-| [11](11-scripted-desktop-rpa.md) | **Scripted Desktop Automation for Repeated Tasks** | Record a repetitive workflow once, export as an RPA script, replay on demand |
+| [04](04-scripted-desktop-rpa.md) | **Scripted Desktop Automation for Repeated Tasks** | Record a repetitive workflow once, export as an RPA script, replay on demand |
+| [05](05-ui-testing.md) | **AI-Powered UI Testing** | Discover controls by name/type, click and type, assert values — no brittle XPath selectors |
+| [06](06-bulk-data-validation.md) | **Bulk Data Validation** | Drive an app through 50+ records; compare each displayed value against a reference table |
+| [07](07-cross-app-workflows.md) | **Cross-App Workflows** | Span desktop and browser in one session — read ERP, submit web portal, download PDF |
+| [08](08-app-health-monitoring.md) | **Application Health Monitoring** | Verify a running app is responsive and connected; pair with Task Scheduler for scheduled checks |
+| [09](09-remote-administration.md) | **Remote Administration** | Manage processes, services, and registry on remote Windows machines over HTTP |
+| [10](10-accessibility-auditing.md) | **Accessibility Auditing** | Traverse the full UIA element tree; report unlabelled buttons and broken tab order |
+| [11](11-dialog-handling.md) | **Dialog and Modal Handling** | Detect unexpected dialogs after every click; handle Save/Discard, file-save, MessageBox |
 
 ## Quick Start — 3 Commands
 

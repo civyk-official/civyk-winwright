@@ -16,25 +16,20 @@ buttons, and verifies results — all through natural conversation.
 
 ## Prerequisites
 
-- WinWright installed and configured as an MCP server
+- WinWright configured as an MCP server in your AI agent —
+  see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
 - The target app must expose its controls via Windows UI Automation (most WinForms, WPF,
   and Win32 apps do)
 
 ## Example: Fill a Monthly Expense Report
 
-### 1. Start WinWright
-
-```bash
-winwright mcp
-```
-
-### 2. Tell Your Agent
+### 1. Tell Your Agent
 
 > "Open the expense report app at C:\Finance\ExpenseApp.exe. Fill in: date = today,
 > amount = 120.50, category = Travel, description = 'Client meeting taxi'. Then submit
 > the report and take a screenshot of the confirmation."
 
-### 3. Tool Sequence
+### 2. Tool Sequence
 
 #### Launch the app
 
@@ -179,7 +174,7 @@ ww_screenshot
   { "appId": "app-3c4d" }
 ```
 
-### 4. Result
+### 3. Result
 
 The agent reports:
 
@@ -189,7 +184,7 @@ The agent reports:
 ## Tips
 
 - If the app shows a confirmation dialog, add "handle any dialogs that appear" to your prompt.
-  See [Use Case 08 — Dialog Handling](08-dialog-handling.md) for patterns.
+  See [Dialog and Modal Handling](11-dialog-handling.md) for patterns.
 - For dropdown lists that don't respond to `ww_select`, try: "click the Category dropdown, then
   click Travel in the list that appears"
 - `ww_snapshot` returns the current element tree — calling it before acting helps the agent

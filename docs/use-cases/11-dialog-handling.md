@@ -17,7 +17,8 @@ WinWright handles UIA-based dialogs (WPF, WinForms) and Win32 MessageBox popups.
 
 ## Prerequisites
 
-- WinWright installed and configured as an MCP server
+- WinWright configured as an MCP server in your AI agent —
+  see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
 - The target app and its dialogs must be UIA-accessible
 
 ## Pattern 1 — Detect and Handle Confirmation Dialogs

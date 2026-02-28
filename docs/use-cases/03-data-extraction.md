@@ -17,26 +17,21 @@ and structures the output. No API needed — just the running application.
 
 ## Prerequisites
 
-- WinWright installed and configured as an MCP server
+- WinWright configured as an MCP server in your AI agent —
+  see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
 - The target app must be running (use `ww_attach` to connect without launching)
 - The data grid or table must be UIA-accessible (most WinForms DataGridView, ListView,
   and WPF DataGrid controls are)
 
 ## Example: Extract 5,000 Invoices from a WinForms App
 
-### 1. Start WinWright
-
-```bash
-winwright mcp
-```
-
-### 2. Tell Your Agent
+### 1. Tell Your Agent
 
 > "Connect to the running Invoicing app (PID 14320) and extract all invoices from
 > July 2025 into a table with columns: Date, Invoice Number, Amount, Status.
 > The list is paginated — keep reading pages until there are no more."
 
-### 3. Tool Sequence
+### 2. Tool Sequence
 
 #### Attach to the running app
 
@@ -121,7 +116,7 @@ ww_get_table_data
 
 The agent repeats this pattern — click Next, read 200 rows — until it has all 5,000 rows.
 
-### 4. Result
+### 3. Result
 
 The agent assembles the data and responds:
 

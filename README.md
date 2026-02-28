@@ -47,63 +47,63 @@ you describe the goal in plain language.
 > Each card links to a detailed walkthrough with real prompts, tool call parameters,
 > and example output. Browse all guides in [docs/use-cases/](docs/use-cases/).
 
-### [AI-Powered UI Testing](docs/use-cases/01-ui-testing.md)
+### [Scripted UI Test Automation for CI](docs/use-cases/01-scripted-ci.md)
 
-An AI agent explores your WinForms or WPF app, finds elements, and asserts state.
-No brittle XPath selectors to maintain — the agent adapts when UI changes.
+Record an AI session once — the agent discovers the UI, performs actions, embeds assertions —
+then export a portable JSON script that replays in CI without an AI agent. Describe your app
+or paste your existing manual test suite; the agent scripts it automatically.
 
 ### [Autonomous Desktop Automation](docs/use-cases/02-desktop-automation.md)
 
 Give an AI agent access to your desktop. It launches apps, moves data between them,
-fills forms, and takes screenshots for verification.
+fills forms, and takes screenshots for verification — no scripts to write or maintain.
 
 ### [Legacy App Data Extraction](docs/use-cases/03-data-extraction.md)
 
 Many enterprise apps have no API. If Windows UI Automation can see a control,
 WinWright can read its value. Extract data from apps that were never built for integration.
 
-### [Cross-App Workflows](docs/use-cases/04-cross-app-workflows.md)
+### [Scripted Desktop Automation for Repeated Tasks](docs/use-cases/04-scripted-desktop-rpa.md)
+
+Record a repetitive daily workflow once. Export as an RPA script and replay on demand —
+no AI agent required after the recording. Ideal for report exports, data imports,
+and any multi-step task that runs the same way every time.
+
+### [AI-Powered UI Testing](docs/use-cases/05-ui-testing.md)
+
+An AI agent explores your WinForms or WPF app, finds elements, and asserts state.
+No brittle XPath selectors to maintain — the agent adapts when UI changes.
+
+### [Bulk Data Validation](docs/use-cases/06-bulk-data-validation.md)
+
+Drive an app through 50+ records automatically. Compare each displayed value against
+a reference table and get a structured pass/fail report with discrepancy details.
+
+### [Cross-App Workflows](docs/use-cases/07-cross-app-workflows.md)
 
 Automate workflows that span desktop apps and browser — read from an accounting app,
 submit to a web portal, screenshot the confirmation.
 
-### [Accessibility Auditing](docs/use-cases/05-accessibility-auditing.md)
+### [Application Health Monitoring](docs/use-cases/08-app-health-monitoring.md)
 
-Traverse the full UIA element tree. Check that controls have names, buttons have labels,
-and keyboard paths exist. The AI agent generates a compliance report.
+Verify a running app is alive and responsive — process running, connection status showing
+'Connected', service healthy. Pair with Windows Task Scheduler for scheduled checks.
 
-### [Scripted UI Test Automation for CI](docs/use-cases/06-scripted-ci.md)
-
-Record a session once — the agent discovers the UI, performs actions, embeds assertions.
-Export as a portable JSON script and replay it in CI without an AI agent. Includes a
-three-layer selector healing strategy for when the UI changes between releases.
-
-### [Remote Administration](docs/use-cases/07-remote-administration.md)
+### [Remote Administration](docs/use-cases/09-remote-administration.md)
 
 Manage processes, services, registry, and scheduled tasks on remote machines over HTTP.
 Five-layer security: IP allowlist, Windows Negotiate auth, AD group authorization,
 rate limiting, and per-user session limits.
 
-### [Dialog and Modal Handling](docs/use-cases/08-dialog-handling.md)
+### [Accessibility Auditing](docs/use-cases/10-accessibility-auditing.md)
+
+Traverse the full UIA element tree. Check that controls have names, buttons have labels,
+and keyboard paths exist. The AI agent generates a compliance report.
+
+### [Dialog and Modal Handling](docs/use-cases/11-dialog-handling.md)
 
 Detect unexpected confirmation dialogs, file-save prompts, and Win32 MessageBox popups
 after every click. Handle or dismiss them without breaking the automation flow.
-
-### [Bulk Data Validation](docs/use-cases/09-bulk-data-validation.md)
-
-Drive an app through 50+ records automatically. Compare each displayed value against
-a reference table and get a structured pass/fail report with discrepancy details.
-
-### [Application Health Monitoring](docs/use-cases/10-app-health-monitoring.md)
-
-Verify a running app is alive and responsive — process running, connection status showing
-'Connected', service healthy. Pair with Windows Task Scheduler for scheduled checks.
-
-### [Scripted Desktop Automation for Repeated Tasks](docs/use-cases/11-scripted-desktop-rpa.md)
-
-Record a repetitive daily workflow once. Export as an RPA script and replay on demand —
-no AI agent required after the recording. Ideal for report exports, data imports,
-and any multi-step task that runs the same way every time.
 
 ## Install
 

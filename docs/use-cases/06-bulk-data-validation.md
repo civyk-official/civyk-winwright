@@ -18,19 +18,14 @@ with the actual values for every discrepancy.
 
 ## Prerequisites
 
-- WinWright installed and configured as an MCP server
+- WinWright configured as an MCP server in your AI agent —
+  see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
 - The target app must be running or launchable
 - Your reference data: a CSV, spreadsheet, or list of key-value pairs
 
 ## Example: Validate Prices for 50 Products
 
-### 1. Start WinWright
-
-```bash
-winwright mcp
-```
-
-### 2. Tell Your Agent
+### 1. Tell Your Agent
 
 > "I'll give you a CSV of product codes and expected prices. For each one, search for
 > the product in the PricingApp, read the displayed price, and tell me if it matches.
@@ -41,7 +36,7 @@ winwright mcp
 > PROD-003, 89.00
 > ... (50 rows)"
 
-### 3. Tool Sequence
+### 2. Tool Sequence
 
 The agent parses the CSV and enters a loop — for each product code:
 
@@ -98,9 +93,9 @@ Response — fail:
 
 The agent collects every result and moves to the next row.
 
-### 4. Result
+### 3. Result
 
-After all 50 products, The agent reports:
+After all 50 products, the agent reports:
 
 ```text
 Bulk Validation Complete — 50 products checked
@@ -137,7 +132,7 @@ You can record the bulk validation as a test script with one test case per produ
 
 The agent calls `ww_test_case_start` for each product, records the search and assert steps,
 then calls `ww_test_case_end`. The exported script can be replayed in CI to verify prices
-after every release (see [Use Case 06 — Scripted UI Test Automation for CI](06-scripted-ci.md)).
+after every release (see [Use Case 01 — Scripted UI Test Automation for CI](01-scripted-ci.md)).
 
 ## Tips
 

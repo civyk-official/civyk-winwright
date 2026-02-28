@@ -23,8 +23,48 @@ The script runs in CI without an AI agent. The AI writes the test; the machine r
 
 ## Prerequisites
 
-- WinWright installed and configured as an MCP server
+- WinWright configured as an MCP server in your AI agent —
+  see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
 - The application under test must be launchable from a path
+
+## Three Ways to Start a Recording
+
+### Mode 1 — Describe Your App and Let the Agent Discover It
+
+You describe what the app does and which screens to test. The agent launches the app,
+reads the UIA element tree, plans the test cases, and records every interaction.
+
+Tell your agent:
+
+> "I want to create a test suite for the login and dashboard screens of this app.
+> Launch C:\TestApp\EmployeeApp.exe and test: (1) login with valid credentials,
+> (2) login with wrong password shows an error, (3) logout returns to login screen."
+
+The agent plans TC-001, TC-002, TC-003, calls `ww_test_case_start` for each one,
+discovers the controls through `ww_snapshot`, and records the interactions automatically.
+**No selector knowledge required — the agent figures out the UI.**
+
+### Mode 2 — Import Your Existing Manual Test Suite
+
+If you already have manual test cases in Excel, Word, TestRail, CSV, or any
+plain-text format, paste them into your prompt (or provide the file path):
+
+> "Here are our manual test cases. Record each one as a test case in WinWright:
+>
+> TC-001: Login — Enter username 'admin', password 'test123', click Sign In,
+> verify dashboard heading contains 'Welcome'
+> TC-002: Invalid login — Enter username 'admin', password 'wrong', click Sign In,
+> verify error message appears
+> ..."
+
+The agent parses the test cases from any format, calls `ww_test_case_start` with the
+matching IDs and titles, navigates the app, and records each step. Your manual test
+library becomes an automated script in one session.
+
+### Mode 3 — Record an RPA Task (No Test Cases)
+
+For repetitive workflows with no pass/fail assertions, skip `ww_test_case_start`
+and record a flat step sequence. See [Use Case 04 — Scripted Desktop Automation](04-scripted-desktop-rpa.md).
 
 ## Part A: Recording a Session
 
@@ -333,9 +373,15 @@ before recording the rest.
   "mode": "test",
   "launchPath": "C:\\TestApp\\EmployeeApp.exe",
   "runConfig": {
-    "captureScreenshots": false,
+    "captureScreenshots": true,
     "continueOnFailure": false
   },
+
+> **Test evidence:** with `captureScreenshots: true`, the runner captures a screenshot
+> before and after each assertion step. Screenshots are named by step and placed alongside
+> the report (`TC-001_step3_before.png`, `TC-002_fail.png`). Set `"captureScreenshots": false`
+> to skip screenshots and reduce disk usage.
+
   "testCases": [
     {
       "id": "TC-001",
