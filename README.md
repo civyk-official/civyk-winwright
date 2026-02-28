@@ -10,6 +10,8 @@ Windows automation server for the [Model Context Protocol](https://modelcontextp
 105 tools for desktop (WPF, WinForms, Win32), browser (Chrome/Edge via CDP),
 and system management — all accessible to AI agents over MCP.
 
+![WinWright Demo](assets/demo.gif)
+
 ## Use Cases
 
 > Each card links to a detailed walkthrough in [docs/use-cases.md](docs/use-cases.md).
