@@ -228,20 +228,17 @@ ww_keyboard_focus  → Tab through controls
 
 ## Scripted Automation for CI
 
-> **Status: Roadmap** — This use case describes a planned capability.
-
 ### The problem
 
 Running an AI agent for every CI build is expensive and non-deterministic.
 AI-driven UI tests are useful during development, but CI needs fast, repeatable,
 and cost-predictable test runs.
 
-### The idea
+### How WinWright helps
 
 An AI agent explores the application once — discovers elements, builds a test flow,
-and exports it as a deterministic sequence of MCP tool calls. This sequence runs in
-CI as a script, calling WinWright tools directly without AI involvement. The AI writes
-the test; the machine runs it.
+and exports it as a deterministic JSON script. The script runs in CI without AI
+involvement. The AI writes the test; the machine runs it.
 
 ### Why it matters
 
@@ -250,23 +247,34 @@ the test; the machine runs it.
 - Fast — no LLM round-trips between steps
 - The AI re-generates the script only when the UI changes
 
-### What exists today
+### Example flow
+
+```text
+ww_record_start       → Begin recording the session
+ww_test_case_start    → Mark start of test case "TC-001: Login"
+ww_launch             → Start the app
+ww_type               → Enter username and password
+ww_click              → Click "Sign In"
+ww_assert_value       → Assert welcome label contains "Welcome" (embedded in script)
+ww_test_case_end      → Close the test case
+ww_export_script      → Export as test-mode JSON script
+```
+
+The exported script captures every step and assertion. A future runner replays it in CI
+without an agent — the AI writes once, CI runs many times.
+
+### What works today
 
 - `ww_record_start` / `ww_record_stop` capture tool calls during an agent session
-- `ww_snapshot` + `ww_state_diff` track UI state changes between actions
-- The recorded sequence provides the foundation for script export
-
-### What's needed
-
-- A script export format (JSON or YAML sequence of tool calls with parameters)
-- A standalone runner that replays the script against WinWright MCP without an AI agent
-- Assertion syntax for expected values and UI states
+- `ww_record_pop` removes mistaken steps before export
+- `ww_test_case_start` / `ww_test_case_end` group steps into named test cases
+- `ww_assert_value` embeds assertions into the recording with property, operator, and expected value
+- `ww_export_script` serialises the recording as a portable JSON script (test mode or RPA mode)
+- `ww_snapshot` + `ww_diff_state` track UI state changes between actions
 
 ---
 
 ## Remote Administration
-
-> **Status: Coming soon** — Available once security hardening is complete.
 
 ### The problem
 
@@ -274,29 +282,47 @@ Managing Windows machines remotely — restarting services, checking processes,
 reading registry keys, verifying scheduled tasks — usually means RDP, PowerShell
 Remoting, or vendor-specific tools. Each has its own access model and learning curve.
 
-### The idea
+### How WinWright helps
 
 WinWright's HTTP transport (`winwright serve --port 8765`) exposes system tools
-over MCP. An AI agent connects remotely and manages the machine through the same
-tool set used locally: process management, service control, registry reads,
-environment variables, and scheduled tasks.
+over MCP with enterprise-grade security built in. An AI agent connects remotely
+and manages the machine through the same tool set used locally: process management,
+service control, registry reads, environment variables, and scheduled tasks.
 
-### What exists today
+### Example flow
 
-- HTTP transport with full MCP tool access
-- 22 system tools (processes, registry, services, environment, network, tasks)
-- Permission guards that restrict dangerous operations by default
-- JSONL audit logging for every tool call
+```text
+# On the remote machine:
+winwright serve --port 8765  (with winwright.json security config)
 
-### What's needed before production use
+# AI agent connects and:
+ww_process_list    → Find a stuck process by name
+ww_process_kill    → Terminate it (requires AllowProcessKill permission)
+ww_service_list    → Check which services are stopped
+ww_service_start   → Restart a failed service (requires AllowServiceControl)
+ww_registry_read   → Read a configuration value
+ww_shell           → Run a diagnostic script (requires AllowShell)
+```
 
-- **Authentication** — NTLM / domain group detection from HTTP requests
-- **Authorization** — Allowed domain groups and per-group permission profiles
-- **Transport security** — TLS termination (reverse proxy or built-in)
-- **Network restrictions** — Allowed IP ranges or subnet filtering
+### What works today
 
-We won't ship this without proper security. The tools are ready;
-the access control layer is not.
+- HTTP transport with full MCP tool access (`winwright serve`)
+- 22 system tools: processes, registry, services, environment, network, tasks
+- **5-layer remote access security model:**
+  - R1: IP allowlist (CIDR ranges + exact IPs; localhost always passes)
+  - R2: Windows Negotiate authentication (Kerberos/NTLM, captures `DOMAIN\user`)
+  - R3: AD group authorization (caller must be in at least one required group)
+  - R4: Fixed-window rate limiting per IP (auto-disabled for localhost)
+  - R5: Per-user session limits + per-AD-group permission overrides
+- TLS/HTTPS via PFX certificate or reverse proxy
+- Daily-rotated audit log (`audit-YYYY-MM-DD.jsonl`) with Windows identity + auto-purge
+
+### Limitations
+
+- Requires both server and clients to be domain-joined for Kerberos auth (NTLM works cross-domain)
+- `ww_shell`, `ww_process_kill`, `ww_service_start`, `ww_service_stop`, and other
+  destructive tools are disabled by default — enable only what you need in `winwright.json`
+- Browser tools (`ww_browser_*`) require Chrome/Edge on the **remote** machine with CDP enabled
 
 ---
 
