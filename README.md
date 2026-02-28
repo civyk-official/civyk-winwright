@@ -1,45 +1,77 @@
-# WinWright — Windows Automation MCP Server
+# WinWright
 
-Playwright-style MCP server for Windows desktop, system, and browser automation.
-105 tools for WPF, WinForms, Win32, and Chrome/Edge via the
-[Model Context Protocol](https://modelcontextprotocol.io/).
+Windows automation server for the [Model Context Protocol](https://modelcontextprotocol.io/).
+105 tools for desktop (WPF, WinForms, Win32), browser (Chrome/Edge via CDP),
+and system management — all accessible to AI agents over MCP.
 
-## Quick Install
+## Use Cases
 
-### Claude Code Plugin (Recommended)
+> Each card links to a detailed walkthrough in [docs/use-cases.md](docs/use-cases.md).
+
+#### [AI-Powered UI Testing](docs/use-cases.md#ai-powered-ui-testing)
+
+An AI agent explores your WinForms or WPF app, finds elements, and asserts state.
+No brittle XPath selectors to maintain — the agent adapts when UI changes.
+
+#### [Autonomous Desktop Automation](docs/use-cases.md#autonomous-desktop-automation)
+
+Give an AI agent access to your desktop. It launches apps, moves data between them,
+fills forms, and takes screenshots for verification.
+
+#### [Legacy App Data Extraction](docs/use-cases.md#legacy-app-data-extraction)
+
+Many enterprise apps have no API. If Windows UI Automation can see a control,
+WinWright can read its value. Extract data from apps that were never built for integration.
+
+#### [Cross-App Workflows](docs/use-cases.md#cross-app-workflows)
+
+Automate workflows that span desktop apps and browser — read from an accounting app,
+submit to a web portal, screenshot the confirmation.
+
+#### [Accessibility Auditing](docs/use-cases.md#accessibility-auditing)
+
+Traverse the full UIA element tree. Check that controls have names, buttons have labels,
+and keyboard paths exist. The AI agent generates a compliance report.
+
+#### [Scripted Automation for CI](docs/use-cases.md#scripted-automation-for-ci) *(Roadmap)*
+
+AI discovers the app once and generates a deterministic MCP script.
+Run it in CI builds without AI involvement — zero token cost per run.
+
+#### [Remote Administration](docs/use-cases.md#remote-administration) *(Coming soon)*
+
+Manage processes, services, registry, and scheduled tasks on remote machines over HTTP.
+Needs security hardening (domain group filtering, TLS) before production use.
+
+## Install
+
+### Claude Code Plugin
 
 ```bash
-# Install the plugin — Claude Code downloads and configures everything
 claude /plugin install https://github.com/civyk-official/civyk-winwright
-
-# Then run the install script to download the binary
 powershell -File ~/.claude/plugins/winwright/scripts/install.ps1
 ```
 
-### Manual Binary Download
+### Binary Download
 
-Download the latest release from
-[GitHub Releases](https://github.com/civyk-official/civyk-winwright/releases):
+Download from [GitHub Releases](https://github.com/civyk-official/civyk-winwright/releases):
 
 | Asset | Architecture |
 |-------|-------------|
 | `winwright-*-win-x64.zip` | Intel/AMD 64-bit |
 | `winwright-*-win-arm64.zip` | ARM64 (Surface Pro, etc.) |
 
-Or use PowerShell:
+### NuGet Package
 
-```powershell
-# Download and extract to a directory in your PATH
-$version = "1.0.0-preview.1"
-$url = "https://github.com/civyk-official/civyk-winwright/releases/download/v$version/winwright-$version-win-x64.zip"
-Invoke-WebRequest $url -OutFile winwright.zip
-Expand-Archive winwright.zip -DestinationPath "$env:LOCALAPPDATA\WinWright"
-$env:PATH += ";$env:LOCALAPPDATA\WinWright"
+```bash
+dotnet tool install -g Civyk.WinWright
 ```
 
-### VSCode MCP Configuration
+Requires .NET 8+ runtime. The binary download above is self-contained and needs no runtime.
 
-Add to your `.vscode/mcp.json`:
+## MCP Client Configuration
+
+### Claude Code / VSCode (stdio)
 
 ```json
 {
@@ -53,7 +85,9 @@ Add to your `.vscode/mcp.json`:
 }
 ```
 
-Or for HTTP transport:
+### Claude Code / VSCode (HTTP)
+
+Start the server first: `Civyk.WinWright.Mcp.exe serve --port 8765`
 
 ```json
 {
@@ -66,11 +100,7 @@ Or for HTTP transport:
 }
 ```
 
-Start the HTTP server first: `Civyk.WinWright.Mcp.exe serve --port 8765`
-
-### Claude Desktop Configuration
-
-Add to your `claude_desktop_config.json`:
+### Claude Desktop
 
 ```json
 {
@@ -83,54 +113,17 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-## Requirements
+## Tools
 
-- Windows 10 or 11 (x64 or ARM64)
-- No .NET SDK required — the binary is fully self-contained
+105 tools across five categories:
 
-## What Can It Do?
-
-WinWright exposes 105 MCP tools across five categories:
-
-### Desktop Automation (58 tools)
-
-Launch apps, click buttons, type text, read values, take screenshots,
-navigate trees, handle dialogs — all via UI Automation (UIA3).
-
-```text
-ww_launch → ww_click → ww_type → ww_get_value → ww_screenshot
-```
-
-### System Tools (22 tools)
-
-Process management, registry, environment variables, file system,
-network interfaces, services, and scheduled tasks.
-
-### Browser Automation (15 tools)
-
-Connect to Chrome/Edge via CDP, navigate pages, find elements,
-click, type, evaluate JavaScript — no Selenium or Playwright dependency.
-
-### AI Agent Features (10 tools)
-
-Snapshots, state diffing, event watching, action recording,
-and `ww_get_schema` for tool discovery.
-
-### Security Layer
-
-Three-layer security model: tool visibility filtering, runtime
-permission guards, and JSONL audit logging. Dangerous operations
-(shell, registry write, process kill) require explicit opt-in
-in `winwright.json`.
-
-## CLI Commands
-
-```text
-winwright mcp              Start MCP server over stdio
-winwright serve --port N   Start MCP server over HTTP (default 8765)
-winwright inspect <pid>    Dump UIA element tree for a process
-winwright doctor           Verify environment prerequisites
-```
+| Category | Count | What it does |
+|----------|-------|-------------|
+| **Desktop Automation** | 58 | Launch apps, click, type, read values, screenshots, tree navigation, dialogs (UIA3) |
+| **System** | 22 | Processes, registry, environment variables, file system, network, services, scheduled tasks |
+| **Browser** | 15 | Chrome/Edge via CDP — navigate, find elements, click, type, evaluate JS. No Selenium dependency |
+| **AI Agent** | 10 | Snapshots, state diffing, event watching, action recording, `ww_get_schema` for tool discovery |
+| **Security** | — | Tool visibility filtering, runtime permission guards, JSONL audit logging |
 
 ## Configuration
 
@@ -155,9 +148,27 @@ Create `winwright.json` next to the binary (or `%APPDATA%\WinWright\winwright.js
 }
 ```
 
-All dangerous operations are **disabled by default**. Enable only what you need.
+All dangerous operations are disabled by default. Enable only what you need.
+
+## CLI
+
+```text
+winwright mcp              Start MCP server (stdio)
+winwright serve --port N   Start MCP server (HTTP, default 8765)
+winwright inspect <pid>    Dump UIA element tree for a process
+winwright doctor           Verify environment prerequisites
+```
+
+## Requirements
+
+- Windows 10 or 11 (x64 or ARM64)
+- No .NET runtime needed for the binary download — it's self-contained
 
 ## License
 
-WinWright is free to use for any purpose (personal, academic, commercial).
-See [LICENSE](LICENSE) for full terms. Attribution is required when redistributing.
+Free to use for any purpose — personal, academic, commercial.
+See [LICENSE](LICENSE) for full terms. Attribution required when redistributing.
+
+---
+
+**Built on Trust, Driven by Value** — [Civyk](https://civyk.com)
