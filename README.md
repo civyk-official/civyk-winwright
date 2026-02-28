@@ -44,42 +44,66 @@ you describe the goal in plain language.
 
 ## Use Cases
 
-> Each card links to a detailed walkthrough in [docs/use-cases.md](docs/use-cases.md).
+> Each card links to a detailed walkthrough with real prompts, tool call parameters,
+> and example output. Browse all guides in [docs/use-cases/](docs/use-cases/).
 
-### [AI-Powered UI Testing](docs/use-cases.md#ai-powered-ui-testing)
+### [AI-Powered UI Testing](docs/use-cases/01-ui-testing.md)
 
 An AI agent explores your WinForms or WPF app, finds elements, and asserts state.
 No brittle XPath selectors to maintain — the agent adapts when UI changes.
 
-### [Autonomous Desktop Automation](docs/use-cases.md#autonomous-desktop-automation)
+### [Autonomous Desktop Automation](docs/use-cases/02-desktop-automation.md)
 
 Give an AI agent access to your desktop. It launches apps, moves data between them,
 fills forms, and takes screenshots for verification.
 
-### [Legacy App Data Extraction](docs/use-cases.md#legacy-app-data-extraction)
+### [Legacy App Data Extraction](docs/use-cases/03-data-extraction.md)
 
 Many enterprise apps have no API. If Windows UI Automation can see a control,
 WinWright can read its value. Extract data from apps that were never built for integration.
 
-### [Cross-App Workflows](docs/use-cases.md#cross-app-workflows)
+### [Cross-App Workflows](docs/use-cases/04-cross-app-workflows.md)
 
 Automate workflows that span desktop apps and browser — read from an accounting app,
 submit to a web portal, screenshot the confirmation.
 
-### [Accessibility Auditing](docs/use-cases.md#accessibility-auditing)
+### [Accessibility Auditing](docs/use-cases/05-accessibility-auditing.md)
 
 Traverse the full UIA element tree. Check that controls have names, buttons have labels,
 and keyboard paths exist. The AI agent generates a compliance report.
 
-### [Scripted Automation for CI](docs/use-cases.md#scripted-automation-for-ci) *(Roadmap)*
+### [Scripted UI Test Automation for CI](docs/use-cases/06-scripted-ci.md)
 
-AI discovers the app once and generates a deterministic MCP script.
-Run it in CI builds without AI involvement — zero token cost per run.
+Record a session once — the agent discovers the UI, performs actions, embeds assertions.
+Export as a portable JSON script and replay it in CI without an AI agent. Includes a
+three-layer selector healing strategy for when the UI changes between releases.
 
-### [Remote Administration](docs/use-cases.md#remote-administration) *(Coming soon)*
+### [Remote Administration](docs/use-cases/07-remote-administration.md)
 
 Manage processes, services, registry, and scheduled tasks on remote machines over HTTP.
-Needs security hardening (domain group filtering, TLS) before production use.
+Five-layer security: IP allowlist, Windows Negotiate auth, AD group authorization,
+rate limiting, and per-user session limits.
+
+### [Dialog and Modal Handling](docs/use-cases/08-dialog-handling.md)
+
+Detect unexpected confirmation dialogs, file-save prompts, and Win32 MessageBox popups
+after every click. Handle or dismiss them without breaking the automation flow.
+
+### [Bulk Data Validation](docs/use-cases/09-bulk-data-validation.md)
+
+Drive an app through 50+ records automatically. Compare each displayed value against
+a reference table and get a structured pass/fail report with discrepancy details.
+
+### [Application Health Monitoring](docs/use-cases/10-app-health-monitoring.md)
+
+Verify a running app is alive and responsive — process running, connection status showing
+'Connected', service healthy. Pair with Windows Task Scheduler for scheduled checks.
+
+### [Scripted Desktop Automation for Repeated Tasks](docs/use-cases/11-scripted-desktop-rpa.md)
+
+Record a repetitive daily workflow once. Export as an RPA script and replay on demand —
+no AI agent required after the recording. Ideal for report exports, data imports,
+and any multi-step task that runs the same way every time.
 
 ## Install
 
