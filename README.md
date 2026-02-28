@@ -4,10 +4,10 @@
 [![GitHub Release](https://img.shields.io/github/v/release/civyk-official/civyk-winwright?label=Release)](https://github.com/civyk-official/civyk-winwright/releases)
 [![License](https://img.shields.io/badge/License-Freeware-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4)](https://github.com/civyk-official/civyk-winwright)
-[![MCP](https://img.shields.io/badge/MCP-105%20tools-0D9488)](https://modelcontextprotocol.io/)
+[![MCP](https://img.shields.io/badge/MCP-110%20tools-0D9488)](https://modelcontextprotocol.io/)
 
 Windows automation server for the [Model Context Protocol](https://modelcontextprotocol.io/).
-105 tools for desktop (WPF, WinForms, Win32), browser (Chrome/Edge via CDP),
+110 tools for desktop (WPF, WinForms, Win32), browser (Chrome/Edge via CDP),
 and system management — all accessible to AI agents over MCP.
 
 ![WinWright Demo](assets/demo.gif)
@@ -177,11 +177,11 @@ Start the server first: `Civyk.WinWright.Mcp.exe serve --port 8765`
 
 ## Tools
 
-105 tools across five categories:
+110 tools across five categories:
 
 | Category | Count | What it does |
 |----------|-------|-------------|
-| **Desktop Automation** | 58 | Launch apps, click, type, read values, screenshots, tree navigation, dialogs (UIA3) |
+| **Desktop Automation** | 63 | Launch apps, click, type, read values, screenshots, tree navigation, dialogs, test case recording, CI script export (UIA3) |
 | **System** | 22 | Processes, registry, environment variables, file system, network, services, scheduled tasks |
 | **Browser** | 15 | Chrome/Edge via CDP — navigate, find elements, click, type, evaluate JS. No Selenium dependency |
 | **AI Agent** | 10 | Snapshots, state diffing, event watching, action recording, `ww_get_schema` for tool discovery |
@@ -215,10 +215,12 @@ All dangerous operations are disabled by default. Enable only what you need.
 ## CLI
 
 ```text
-winwright mcp              Start MCP server (stdio)
-winwright serve --port N   Start MCP server (HTTP, default 8765)
-winwright inspect <pid>    Dump UIA element tree for a process
-winwright doctor           Verify environment prerequisites
+winwright mcp                                    Start MCP server (stdio)
+winwright serve --port N                         Start MCP server (HTTP, default 8765)
+winwright run <script.json> [--format text|junit] [--output <file>]
+                                                 Replay a recorded automation script
+winwright inspect <pid>                          Dump UIA element tree for a process
+winwright doctor                                 Verify environment prerequisites
 ```
 
 ## Requirements

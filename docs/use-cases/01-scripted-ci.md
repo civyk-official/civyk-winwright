@@ -14,9 +14,8 @@ An AI agent explores the application once — discovers elements, executes actio
 embeds assertions — and the recording is exported as a deterministic JSON script.
 The script runs in CI without an AI agent. The AI writes the test; the machine runs it.
 
-**What works today:** recording, in-session correction, script export in test and RPA modes.
-
-**In development:** the standalone `winwright run` script runner (CLI replay without an agent).
+**What works today:** recording, in-session correction, script export in test and RPA modes,
+and standalone CI replay via `winwright run` (no AI agent required).
 
 **Roadmap:** selector fingerprinting (automatic UI-change resilience) and `winwright heal`
 (AI-assisted script repair when the UI changes significantly).
@@ -445,7 +444,7 @@ RPA mode has no assertions and no test case grouping. The runner replays steps i
 
 ## Part D: CI Replay
 
-### Current: Run Via Agent (Available Now)
+### Run Via Agent (Always Available)
 
 The exported JSON is a portable artifact. Ask your agent to replay it:
 
@@ -453,21 +452,21 @@ The exported JSON is a portable artifact. Ask your agent to replay it:
 
 The agent reads the JSON, reconstructs the steps, and executes them.
 
-### Coming: Standalone Runner (In Development)
+### Standalone Runner (Available Now)
 
-When the `winwright run` CLI ships, drop the script into your pipeline:
+Drop the script into your pipeline — no AI agent, no token cost:
 
 ```yaml
 # Azure DevOps / GitHub Actions example
 - name: Run UI regression
-  run: winwright run login-suite.json --output junit --report test-results.xml
+  run: winwright run login-suite.json --format junit --output test-results.xml
 
 # Exit codes: 0 = all pass | 1 = assertion failures | 2 = error/crash
 ```
 
-The runner executes steps directly — no AI agent, no token cost.
+The runner executes steps directly using the WinWright automation engine.
 
-**Planned runner output (text mode):**
+**Text mode output (default):**
 
 ```text
 WinWright Script Runner — login-suite.json
@@ -481,7 +480,7 @@ WinWright Script Runner — login-suite.json
 Results: 1 passed, 1 failed (2 total)  |  Duration: 3.4s
 ```
 
-**Planned JUnit XML output (for CI dashboards):**
+**JUnit XML output (`--format junit`, for CI dashboards):**
 
 ```xml
 <testsuite name="login-suite.json" tests="2" failures="1" errors="0" time="3.4">
@@ -568,9 +567,8 @@ you want the AI agent to fix one broken step without a full command-line heal pa
 
 ## Limitations
 
-- The standalone runner (`winwright run`) is in development — replay currently requires an agent
-- Fingerprint capture (Layer 2) ships with the runner
-- `winwright heal` (Layer 3) is on the roadmap — timeline depends on runner completion
+- Fingerprint capture (Layer 2 resilience) is on the roadmap
+- `winwright heal` (Layer 3) is on the roadmap
 
 ---
 
