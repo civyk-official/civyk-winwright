@@ -511,7 +511,7 @@ At record time, prefer stable selectors. Priority order:
 
 Prefer `AutomationId` for everything you can. If the developer set it, use it.
 
-### Layer 2 — Fingerprint Fallback Chain (In Development, ships with runner)
+### Layer 2 — Fingerprint Fallback Chain (Roadmap)
 
 When a step's primary selector fails at runtime, the runner automatically tries
 fallback selectors derived from a **fingerprint** captured at record time:
@@ -574,8 +574,10 @@ can repair a specific script interactively without a full command-line pass.
 
 - Fingerprint capture (Layer 2 resilience) is on the roadmap; `winwright heal` uses
   fuzzy string matching today and does not yet store UI fingerprints between runs
-- The `winwright run` CLI runner is in development; script replay currently requires the
-  MCP agent or direct API integration
+- `winwright heal` probes selectors against a live running application — the target app
+  must be running and reachable during the heal pass
+- `ww_assert_value` is the only supported assertion type; complex multi-element or
+  cross-window assertions require custom logic in the MCP session
 
 ---
 
