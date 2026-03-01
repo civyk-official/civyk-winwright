@@ -49,8 +49,8 @@ Response:
 #### Find the data grid
 
 ```json
-ww_find_elements
-  { "appId": "app-5e6f", "controlType": "DataGrid" }
+ww_query
+  { "appId": "app-5e6f", "selector": "type=DataGrid" }
 ```
 
 Response:
@@ -150,7 +150,7 @@ Response:
 ```
 
 Tell your agent: "Read all the fields in the Invoice Details panel and return them as a table."
-The agent calls `ww_find_elements` to discover all controls, then `ww_get_value` on each.
+The agent calls `ww_query` to discover all controls, then `ww_get_value` on each.
 
 ## Tips
 

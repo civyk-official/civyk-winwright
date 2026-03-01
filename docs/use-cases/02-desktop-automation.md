@@ -194,7 +194,7 @@ The agent reports:
 
 - Some admin operations (registry, services, process kill) are disabled by default;
   enable them in `winwright.json` if needed
-- Controls that respond only to mouse hover (not keyboard) may need `ww_mouse_move` first
+- Controls that respond only to mouse hover (not keyboard) may need `ww_hover` first
 
 ---
 

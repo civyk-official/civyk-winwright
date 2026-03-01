@@ -11,7 +11,7 @@ unexpected dialogs or layout changes.
 
 ## How WinWright Helps
 
-An AI agent uses `ww_find_elements` to discover controls by name, type, or content — not
+An AI agent uses `ww_query` to discover controls by name, type, or content — not
 by fixed paths. It reads the live element tree, decides what to click and where to type,
 and asserts values using `ww_assert_value`. When the UI changes, the agent adapts.
 

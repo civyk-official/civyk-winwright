@@ -57,8 +57,8 @@ This returns the full tree with `name`, `controlType`, `automationId`, `isKeyboa
 #### Find all buttons and check for missing names
 
 ```json
-ww_find_elements
-  { "appId": "app-a1b2", "controlType": "Button" }
+ww_query
+  { "appId": "app-a1b2", "selector": "type=Button" }
 ```
 
 Response:
@@ -83,8 +83,8 @@ The agent identifies:
 #### Find all edit controls and check for labels
 
 ```json
-ww_find_elements
-  { "appId": "app-a1b2", "controlType": "Edit" }
+ww_query
+  { "appId": "app-a1b2", "selector": "type=Edit" }
 ```
 
 Response:
@@ -110,17 +110,14 @@ ww_keyboard
 ```
 
 ```json
-ww_get_focused_element
+ww_snapshot
   { "appId": "app-a1b2" }
 ```
 
-Response:
+The agent inspects the returned snapshot tree to identify which element currently has
+keyboard focus.
 
-```json
-{ "name": "Username", "controlType": "Edit", "automationId": "txtUsername" }
-```
-
-The agent presses Tab repeatedly and calls `ww_get_focused_element` after each press to
+The agent presses Tab repeatedly and calls `ww_snapshot` after each press to
 trace the tab order. If an interactive control is skipped (focus jumps over it),
 it is flagged as keyboard-unreachable.
 

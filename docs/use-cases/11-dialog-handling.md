@@ -33,8 +33,8 @@ WinWright handles UIA-based dialogs (WPF, WinForms) and Win32 MessageBox popups.
 #### Open the customer record
 
 ```json
-ww_find_elements
-  { "appId": "app-1a2b", "selector": "Name:Acme Corp", "controlType": "ListItem" }
+ww_query
+  { "appId": "app-1a2b", "selector": "Name:Acme Corp" }
 ```
 
 ```json
@@ -62,8 +62,8 @@ ww_click
 After any click that might trigger a dialog, the agent calls:
 
 ```json
-ww_find_elements
-  { "appId": "app-1a2b", "controlType": "Window" }
+ww_query
+  { "appId": "app-1a2b", "selector": "type=Window" }
 ```
 
 Response — dialog detected:
@@ -124,8 +124,8 @@ The dialog closes and the record is saved.
 After the export menu click triggers the save dialog:
 
 ```json
-ww_find_elements
-  { "appId": "app-1a2b", "controlType": "Window" }
+ww_query
+  { "appId": "app-1a2b", "selector": "type=Window" }
 ```
 
 Response:
@@ -153,8 +153,8 @@ ww_click
 #### Handle the "file already exists" overwrite prompt (if it appears)
 
 ```json
-ww_find_elements
-  { "appId": "app-1a2b", "controlType": "Window" }
+ww_query
+  { "appId": "app-1a2b", "selector": "type=Window" }
 ```
 
 ```json
@@ -195,7 +195,7 @@ Response:
 { "found": true, "windowId": "h-dlg2", "title": "Confirm Delete", "elapsedMs": 340 }
 ```
 
-This is more reliable than polling with `ww_find_elements` — it waits for the dialog
+This is more reliable than polling with `ww_query` — it waits for the dialog
 to appear rather than checking immediately.
 
 ## Telling Your Agent to Handle Dialogs Automatically
@@ -218,7 +218,7 @@ The agent will apply this policy throughout the session without being reminded f
 ## Limitations
 
 - Custom-drawn dialog overlays that do not create a separate Win32 window (in-canvas popups)
-  are not detectable via `ww_find_elements` — use `ww_screenshot` and ask the agent to describe
+  are not detectable via `ww_query` — use `ww_screenshot` and ask the agent to describe
   what it sees
 - Some protected system dialogs (UAC elevation prompts) cannot be interacted with via UIA
 

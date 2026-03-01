@@ -15,11 +15,8 @@ over MCP with a five-layer security model built in. An AI agent connects remotel
 and manages the machine through the same tool set used locally.
 
 **What works today:** HTTP transport (`winwright serve --port 8765`), all system tools
-accessible remotely, and JSONL audit logging.
-
-**In development:** IP allowlist, Windows Negotiate authentication, AD group authorization,
-rate limiting, per-user session limits, and TLS/HTTPS. The configuration examples below
-show the planned full security setup — enable only what has shipped in your version.
+accessible remotely, JSONL audit logging, IP allowlist, Windows Negotiate authentication,
+AD group authorization, rate limiting, per-user session limits, and TLS/HTTPS.
 
 ## Prerequisites
 
@@ -128,17 +125,17 @@ Response:
 }
 ```
 
-#### Restart the service
+#### Start the service
 
 ```json
-ww_service_restart
+ww_service_start
   { "name": "MyDataService" }
 ```
 
 Response:
 
 ```json
-{ "name": "MyDataService", "previousStatus": "Stopped", "newStatus": "Running", "durationMs": 3240 }
+{ "name": "MyDataService", "status": "Running" }
 ```
 
 #### Confirm it's running
@@ -181,7 +178,7 @@ Response:
 Every call is recorded in `audit-2026-02-28.jsonl`:
 
 ```json
-{ "ts": "2026-02-28T14:32:01Z", "tool": "ww_service_restart",
+{ "ts": "2026-02-28T14:32:01Z", "tool": "ww_service_start",
   "status": "ok", "caller": "DOMAIN\\alice", "identity": "svc-winwright",
   "durationMs": 3240 }
 { "ts": "2026-02-28T14:32:05Z", "tool": "ww_shell",

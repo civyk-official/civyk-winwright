@@ -73,11 +73,6 @@ Response:
 #### Read the connection status
 
 ```json
-ww_find_elements
-  { "appId": "app-mon1", "selector": "AutomationId:lblConnectionStatus" }
-```
-
-```json
 ww_get_value
   { "appId": "app-mon1", "selector": "AutomationId:lblConnectionStatus" }
 ```
