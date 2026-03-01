@@ -12,17 +12,16 @@ breaks when the UI changes.
 ## How WinWright Helps
 
 You walk through the task once with an AI agent watching. The agent records every
-successful interaction as an RPA script. When the runner ships, you run the script daily
-with `winwright run task.json` — no AI involved, no token cost. The recording handles the
-"figure out the steps" part; the runner handles the "do it every day" part.
+successful interaction as an RPA script. Run the script daily with `winwright run task.json`
+— no AI involved, no token cost. The recording handles the "figure out the steps" part;
+the runner handles the "do it every day" part.
 
-**What works today:** recording, in-session correction, RPA script export.
-
-**In development:** the standalone `winwright run` script runner (CLI replay without an agent).
+**What works today:** recording, in-session correction, RPA script export, and standalone
+replay via `winwright run` (no AI agent required).
 
 ## Difference from Test Mode
 
-Use Case 06 covers **test mode** — grouped test cases with pass/fail assertions for CI.
+Use Case 01 covers **test mode** — grouped test cases with pass/fail assertions for CI.
 This use case covers **RPA mode** — a flat step sequence with no test cases and no assertions.
 Use RPA mode when you want to automate a task, not verify an outcome.
 
@@ -152,7 +151,7 @@ ww_record_pop
   { "appId": "app-rpa1", "count": 1 }
 ```
 
-See [Use Case 06 — Part B: Correcting a Recording](01-scripted-ci.md#part-b-correcting-a-recording)
+See [Use Case 01 — Part B: Correcting a Recording](01-scripted-ci.md#part-b-correcting-a-recording)
 for the full set of correction patterns (they apply equally to RPA mode).
 
 ### 4. Export the RPA Script
@@ -206,9 +205,7 @@ Note: `mode: "rpa"` — no `testCases` array. The runner replays steps in order.
 The agent reads the script and executes each step. No re-learning — it follows
 the recorded sequence exactly.
 
-### Coming: Standalone Runner (In Development)
-
-When `winwright run` ships:
+### Standalone Runner
 
 ```bat
 winwright run C:\scripts\daily-sales-import.json
@@ -235,10 +232,9 @@ Exit codes: `0` = all steps completed, `1` = a step failed, `2` = crash or error
 
 ## Limitations
 
-- The standalone runner is in development — replay currently requires an agent
 - RPA scripts don't include assertions — if you need to verify the task completed
   correctly (e.g., "confirm the Process button shows 'Done'"), use test mode instead
-  (see [Use Case 06](01-scripted-ci.md))
+  (see [Use Case 01](01-scripted-ci.md))
 
 ---
 

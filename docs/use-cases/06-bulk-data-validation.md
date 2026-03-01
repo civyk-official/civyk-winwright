@@ -105,7 +105,6 @@ FAILED: 3
 
 Discrepancies:
   PROD-001  Expected: 29.99  Actual: 32.50  ← price increase not reflected
-  PROD-018  Expected: 14.50  Actual: 14.50  (pass — ignore this example)
   PROD-031  Expected: 89.00  Actual: 0.00   ← price missing (product inactive?)
   PROD-044  Expected: 12.75  Actual: 12.99  ← rounding difference
 

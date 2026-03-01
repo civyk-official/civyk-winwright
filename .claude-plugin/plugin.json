@@ -1,6 +1,6 @@
 {
   "name": "winwright",
-  "description": "Playwright-style MCP server for Windows desktop, system, and browser automation. 105 tools for WPF, WinForms, Win32, Chrome/Edge via Model Context Protocol.",
+  "description": "Playwright-style MCP server for Windows desktop, system, and browser automation. 110 tools for WPF, WinForms, Win32, Chrome/Edge via Model Context Protocol.",
   "version": "1.0.0-preview.1",
   "author": {
     "name": "Civyk",
