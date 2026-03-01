@@ -373,12 +373,6 @@ before recording the rest.
     "captureScreenshots": true,
     "continueOnFailure": false
   },
-
-> **Test evidence:** with `captureScreenshots: true`, the runner captures a screenshot
-> before and after each assertion step. Screenshots are named by step and placed alongside
-> the report (`TC-001_step3_before.png`, `TC-002_fail.png`). Set `"captureScreenshots": false`
-> to skip screenshots and reduce disk usage.
-
   "testCases": [
     {
       "id": "TC-001",
@@ -420,6 +414,11 @@ before recording the rest.
 }
 ```
 
+> **Screenshot evidence:** with `captureScreenshots: true` in `runConfig` (or `--screenshots`
+> on the CLI), the runner saves a screenshot before each step and on every failure.
+> Files are named `step_NNN_before.png` and `step_NNN_fail.png`. Override the output
+> directory with `--screenshots-dir ./evidence` or by setting `screenshotDir` in `runConfig`.
+
 ### RPA Mode (no test cases — flat step list)
 
 When no `ww_test_case_start` was called, the script exports with a flat `steps[]`:
@@ -458,6 +457,10 @@ Drop the script into your pipeline — no AI agent, no token cost:
 # Azure DevOps / GitHub Actions example
 - name: Run UI regression
   run: winwright run login-suite.json --format junit --output test-results.xml
+
+# With screenshot evidence captured on each failure:
+- name: Run UI regression with evidence
+  run: winwright run login-suite.json --format junit --output test-results.xml --screenshots --screenshots-dir ./evidence
 
 # Exit codes: 0 = all pass | 1 = assertion failures | 2 = error/crash
 ```
@@ -511,23 +514,20 @@ At record time, prefer stable selectors. Priority order:
 
 Prefer `AutomationId` for everything you can. If the developer set it, use it.
 
-### Layer 2 — Fingerprint Fallback Chain (Roadmap)
+### Layer 2 — Fingerprint Fallback Chain
 
 When a step's primary selector fails at runtime, the runner automatically tries
 fallback selectors derived from a **fingerprint** captured at record time:
 
 ```text
-Attempt 1  Primary selector as recorded   "AutomationId:btnLogin"
-Attempt 2  AutomationId alone             [automationId='btnLogin']
-Attempt 3  Name + ControlType             [name='Login'][controlType='Button']
-Attempt 4  Name + ControlType + parent    [name='Login'][controlType='Button'] under [automationId='pnlAuth']
+Attempt 1  Primary selector as recorded   "#btnLogin"
+Attempt 2  AutomationId shorthand         "#btnLogin"  (e.g. via "#{automationId}")
+Attempt 3  Name + ControlType             [name="Login"][controlType="Button"]
+Attempt 4  Name alone                     Name=Login
 ```
 
-If any fallback succeeds, the step is marked `[HEALED]` in the report — visible but not fatal.
+If any fallback succeeds, the runner logs `[HEALED]` to stderr — visible but not fatal.
 Healing is always logged because a renamed button may signal a real business logic change.
-
-**With `--auto-heal`**, the runner writes the corrected selector back into the script file,
-so the next run uses the updated selector directly.
 
 ### Layer 3 — Selector Heal Pass
 
@@ -572,8 +572,10 @@ can repair a specific script interactively without a full command-line pass.
 
 ## Limitations
 
-- Fingerprint capture (Layer 2 resilience) is on the roadmap; `winwright heal` uses
-  fuzzy string matching today and does not yet store UI fingerprints between runs
+- The fingerprint fallback schema and runner-side fallback chain (Layer 2) are implemented;
+  MCP tool handlers do not yet populate fingerprint fields at record time, so recorded scripts
+  currently carry no fingerprint data — the fallback chain activates automatically once tool
+  handlers are updated to pass element properties to `Record()`
 - `winwright heal` probes selectors against a live running application — the target app
   must be running and reachable during the heal pass
 - `ww_assert_value` is the only supported assertion type; complex multi-element or
