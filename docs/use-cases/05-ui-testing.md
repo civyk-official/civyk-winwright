@@ -37,7 +37,7 @@ The agent calls these tools in order:
 
 ```json
 ww_launch
-  { "appPath": "C:\\TestApp\\EmployeeApp.exe" }
+  { "exePath": "C:\\TestApp\\EmployeeApp.exe" }
 ```
 
 Response:

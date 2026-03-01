@@ -124,7 +124,7 @@ The agent calls (each automatically recorded as TC-001 steps):
 
 ```json
 ww_launch
-  { "appPath": "C:\\TestApp\\EmployeeApp.exe" }
+  { "exePath": "C:\\TestApp\\EmployeeApp.exe" }
 ```
 
 ```json
@@ -366,12 +366,16 @@ before recording the rest.
 ```json
 {
   "version": "1",
-  "appId": "app-1a2b",
+  "appId": "",
   "mode": "test",
   "launchPath": "C:\\TestApp\\EmployeeApp.exe",
   "runConfig": {
-    "captureScreenshots": true,
-    "continueOnFailure": false
+    "captureScreenshots": false,
+    "screenshotFormat": "png",
+    "screenshotOnFailureOnly": false,
+    "continueOnFailure": false,
+    "stepTimeoutMs": 10000,
+    "maxFailures": 0
   },
   "testCases": [
     {
@@ -426,9 +430,17 @@ When no `ww_test_case_start` was called, the script exports with a flat `steps[]
 ```json
 {
   "version": "1",
-  "appId": "app-1a2b",
+  "appId": "",
   "mode": "rpa",
   "launchPath": "C:\\MyTask\\app.exe",
+  "runConfig": {
+    "captureScreenshots": false,
+    "screenshotFormat": "png",
+    "screenshotOnFailureOnly": false,
+    "continueOnFailure": false,
+    "stepTimeoutMs": 10000,
+    "maxFailures": 0
+  },
   "steps": [
     { "tool": "ww_click",  "selector": "Name:New Report",   "timestamp": "..." },
     { "tool": "ww_type",   "selector": "Name:Description",  "timestamp": "..." },
@@ -462,7 +474,7 @@ Drop the script into your pipeline — no AI agent, no token cost:
 - name: Run UI regression with evidence
   run: winwright run login-suite.json --format junit --output test-results.xml --screenshots --screenshots-dir ./evidence
 
-# Exit codes: 0 = all pass | 1 = assertion failures | 2 = error/crash
+# Exit codes: 0 = all pass | 1 = failures or errors
 ```
 
 The runner executes steps directly using the WinWright automation engine.
@@ -470,31 +482,45 @@ The runner executes steps directly using the WinWright automation engine.
 **Text mode output (default):**
 
 ```text
-WinWright Script Runner — login-suite.json
-==========================================
-[PASS]   TC-001  2.3s  Login with valid credentials
-[FAIL]   TC-002  1.1s  Login with wrong password
-         Step 2: ww_assert_value #lblError contains 'Username or password incorrect'
-         Expected: contains 'Username or password incorrect' | Actual: ''
-         Evidence: TC-002_fail.png
-==========================================
-Results: 1 passed, 1 failed (2 total)  |  Duration: 3.4s
+[PASS] TC-001: Login with valid credentials  (2300 ms)
+  [pass] #1 ww_type  [AutomationId:txtUsername]
+  [pass] #2 ww_type  [AutomationId:txtPassword]
+  [pass] #3 ww_click  [Name:Sign In]
+[FAIL] TC-002: Login with wrong password  (1100 ms)
+  [pass] #1 ww_type  [AutomationId:txtUsername]
+  [FAIL] #2 ww_assert_value  [#lblError]  -- Expected contains 'Username or password incorrect', actual ''
+
+Result: FAILED  (1 passed, 1 failed, 0 errors, 2 total)
 ```
 
 **JUnit XML output (`--format junit`, for CI dashboards):**
 
 ```xml
-<testsuite name="login-suite.json" tests="2" failures="1" errors="0" time="3.4">
-  <testcase name="TC-001 — Login with valid credentials" time="2.3" />
-  <testcase name="TC-002 — Login with wrong password" time="1.1">
-    <failure message="Assertion failed: #lblError contains 'Username or password incorrect'">
-      Step 2: ww_assert_value selector=#lblError
-      Expected: contains 'Username or password incorrect'
-      Actual:   ''
-      Screenshot: TC-002_fail.png
-    </failure>
-  </testcase>
-</testsuite>
+<testsuites name="WinWright">
+  <testsuite name="TC-001: Login with valid credentials" tests="3" failures="0" errors="0" skipped="0" time="2.300">
+    <testcase name="#1 ww_type" classname="AutomationId:txtUsername" time="0.450" />
+    <testcase name="#2 ww_type" classname="AutomationId:txtPassword" time="0.380" />
+    <testcase name="#3 ww_click" classname="Name:Sign In" time="1.470" />
+  </testsuite>
+  <testsuite name="TC-002: Login with wrong password" tests="2" failures="1" errors="0" skipped="0" time="1.100">
+    <testcase name="#1 ww_type" classname="AutomationId:txtUsername" time="0.400" />
+    <testcase name="#2 ww_assert_value" classname="#lblError" time="0.700">
+      <failure message="Expected contains 'Username or password incorrect', actual ''">
+        actual:
+        expected: Username or password incorrect
+      </failure>
+    </testcase>
+  </testsuite>
+</testsuites>
+```
+
+Screenshots (when `--screenshots` or `--screenshots-dir` is used) appear as `<system-out>`
+attachments inside each `<testcase>`:
+
+```xml
+<testcase name="#1 ww_click" classname="Name:Sign In" time="1.470">
+  <system-out>[[ATTACHMENT|./evidence/step_001_before.png]]</system-out>
+</testcase>
 ```
 
 ## Part E: Selector Resilience and Healing
@@ -534,26 +560,48 @@ Healing is always logged because a renamed button may signal a real business log
 When the UI changes significantly and selector fallbacks also fail, run:
 
 ```bash
-winwright heal my-suite.json \
-  --app "C:\MyApp\MyApp.exe" \
-  --output my-suite-v2.json
+winwright heal my-suite.json --output my-suite-v2.json
 ```
+
+The healer reads `launchPath` from the script JSON, launches the app automatically,
+and probes each selector against the live UI tree.
+
+Full syntax:
+
+```text
+winwright heal <script.json> [--output <file>] [--min-confidence <0-1>]
+```
+
+- `--output` writes the healed JSON to a file instead of stdout
+- `--min-confidence` overrides the auto-heal threshold (default 0.70)
 
 The healer:
 
-1. Launches the app (or attaches to a running process via `--pid`)
+1. Launches the app using the `launchPath` from the script JSON
 2. For each step that carries a selector: probes it with the live UI tree to check whether
    it still resolves
 3. For any broken selector: performs fuzzy matching across all visible elements using
-   AutomationId similarity (Levenshtein) and Name similarity (Jaccard token overlap)
+   a weighted score: `0.6 × AutomationId similarity (Levenshtein) + 0.4 × Name similarity
+   (Jaccard token overlap)`
 4. Assigns one of four outcomes per step:
    - **Ok** — selector still works; no change
    - **Healed** — a match above the confidence threshold (default 0.70) was found;
      selector updated automatically
-   - **Suggested** — best match is above 0.40 but below 0.70; candidates listed for
-     human review
+   - **Suggested** — best match is above 0.40 but below the confidence threshold;
+     candidates listed for human review
    - **Unresolvable** — no similar element found; manual intervention required
-5. Writes the healed script to `--output` and prints a summary to stderr
+5. Without `--output`: prints the healed script JSON to stdout. With `--output`: writes
+   the JSON to the specified file and prints only the summary line to stderr
+
+Summary line format: `[heal] ok=N healed=N suggested=N unresolvable=N`
+
+Exit codes: `0` = no unresolvable steps, `2` = one or more unresolvable steps.
+
+> **Scoring note:** because AutomationId contributes at most 60% and Name at most 40%
+> of the score, a pure `#id` selector (AutomationId only, no Name hint) can reach at most
+> 0.60 — below the default 0.70 auto-heal threshold. To maximise auto-heal success, record
+> selectors that include both an AutomationId and a Name, or lower the threshold with
+> `--min-confidence`.
 
 Steps marked **Suggested** or **Unresolvable** require a human decision — they may
 represent genuine workflow changes, not just renamed controls.
@@ -576,8 +624,8 @@ can repair a specific script interactively without a full command-line pass.
   MCP tool handlers do not yet populate fingerprint fields at record time, so recorded scripts
   currently carry no fingerprint data — the fallback chain activates automatically once tool
   handlers are updated to pass element properties to `Record()`
-- `winwright heal` probes selectors against a live running application — the target app
-  must be running and reachable during the heal pass
+- `winwright heal` launches the app from the script's `launchPath` to probe selectors —
+  the target app must be launchable during the heal pass
 - `ww_assert_value` is the only supported assertion type; complex multi-element or
   cross-window assertions require custom logic in the MCP session
 

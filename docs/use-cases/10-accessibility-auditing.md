@@ -35,7 +35,7 @@ navigation paths, then generates a structured report of findings.
 
 ```json
 ww_launch
-  { "appPath": "C:\\TestApp\\EmployeeApp.exe" }
+  { "exePath": "C:\\TestApp\\EmployeeApp.exe" }
 ```
 
 Response:

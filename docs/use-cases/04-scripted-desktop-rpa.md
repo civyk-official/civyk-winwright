@@ -74,7 +74,7 @@ No `ww_test_case_start` is called. All steps go into a flat list — this is RPA
 
 ```json
 ww_launch
-  { "appPath": "C:\\Tools\\ReportingApp.exe" }
+  { "exePath": "C:\\Tools\\ReportingApp.exe" }
 ```
 
 ```json
@@ -117,7 +117,7 @@ ww_click
 
 ```json
 ww_launch
-  { "appPath": "C:\\Tools\\ImportTool.exe" }
+  { "exePath": "C:\\Tools\\ImportTool.exe" }
 ```
 
 ```json
@@ -180,21 +180,30 @@ The agent writes the JSON content to the file (requires `allowFileWrite: true` i
 ```json
 {
   "version": "1",
-  "appId": "app-rpa1",
+  "appId": "",
   "mode": "rpa",
   "launchPath": "C:\\Tools\\ReportingApp.exe",
+  "runConfig": {
+    "captureScreenshots": false,
+    "screenshotFormat": "png",
+    "screenshotOnFailureOnly": false,
+    "continueOnFailure": false,
+    "stepTimeoutMs": 10000,
+    "maxFailures": 0
+  },
   "steps": [
-    { "tool": "ww_launch",    "extra": "{\"appPath\":\"C:\\\\Tools\\\\ReportingApp.exe\"}", "timestamp": "..." },
+    { "tool": "ww_launch",    "extra": "{\"exePath\":\"C:\\\\Tools\\\\ReportingApp.exe\"}", "timestamp": "..." },
     { "tool": "ww_click",     "selector": "Name:Sales Reports",  "timestamp": "..." },
     { "tool": "ww_type",      "selector": "Name:From Date",      "timestamp": "..." },
     { "tool": "ww_click",     "selector": "Name:Export",         "timestamp": "..." },
-    { "tool": "ww_launch",    "extra": "{\"appPath\":\"C:\\\\Tools\\\\ImportTool.exe\"}", "timestamp": "..." },
+    { "tool": "ww_launch",    "extra": "{\"exePath\":\"C:\\\\Tools\\\\ImportTool.exe\"}", "timestamp": "..." },
     { "tool": "ww_click",     "selector": "Name:Process",        "timestamp": "..." }
   ]
 }
 ```
 
-Note: `mode: "rpa"` — no `testCases` array. The runner replays steps in order.
+Note: `mode: "rpa"` — no `testCases` array. `appId` is cleared on export (session-specific).
+The runner replays steps in order.
 
 ## Running the Script Daily
 
@@ -219,7 +228,7 @@ $trigger = New-ScheduledTaskTrigger -Daily -At "08:00"
 Register-ScheduledTask -TaskName "DailySalesImport" -Action $action -Trigger $trigger
 ```
 
-Exit codes: `0` = all steps completed, `1` = a step failed, `2` = crash or error.
+Exit codes: `0` = all steps completed, `1` = a step failed or an error occurred.
 
 ## Tips
 

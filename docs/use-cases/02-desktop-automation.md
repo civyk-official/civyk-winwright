@@ -35,7 +35,7 @@ buttons, and verifies results — all through natural conversation.
 
 ```json
 ww_launch
-  { "appPath": "C:\\Finance\\ExpenseApp.exe" }
+  { "exePath": "C:\\Finance\\ExpenseApp.exe" }
 ```
 
 Response:
