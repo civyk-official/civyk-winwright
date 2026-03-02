@@ -207,7 +207,7 @@ after every click. Handle or dismiss them without breaking the automation flow.
 | **System** | 22 | Processes, registry, environment variables, file system, network, services, scheduled tasks |
 | **Browser** | 15 | Chrome/Edge via CDP — navigate, find elements, click, type, evaluate JS. No Selenium dependency |
 | **AI Agent** | 10 | Snapshots, state diffing, event watching, action recording, `ww_get_schema` for tool discovery |
-| **Security** | — | Tool visibility filtering, runtime permission guards, JSONL audit logging |
+| **Security** | — | Runtime permission guards with AD group overrides, JSONL audit logging |
 
 ## Configuration
 
