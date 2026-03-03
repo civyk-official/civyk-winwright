@@ -33,9 +33,10 @@ reads the UIA element tree, plans the test cases, and records every interaction.
 
 Tell your agent:
 
-> "I want to create a test suite for the login and dashboard screens of this app.
-> Launch C:\TestApp\EmployeeApp.exe and test: (1) login with valid credentials,
-> (2) login with wrong password shows an error, (3) logout returns to login screen."
+> "Start a recording session and create a test suite for the login and dashboard screens
+> of this app. Launch C:\TestApp\EmployeeApp.exe and record tests for: (1) login with
+> valid credentials, (2) login with wrong password shows an error, (3) logout returns
+> to login screen. Export the script when done."
 
 The agent plans TC-001, TC-002, TC-003, calls `ww_test_case_start` for each one,
 discovers the controls through `ww_snapshot`, and records the interactions automatically.
