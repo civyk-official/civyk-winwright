@@ -24,6 +24,10 @@ standalone CI replay via `winwright run` (no AI agent required), and selector he
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
 - The application under test must be launchable from a path
 
+> **How does the agent know to use WinWright?** Once configured as an MCP server, the
+> agent sees all `ww_*` tools and picks the right ones based on your description. No need
+> to mention WinWright by name. See [How Prompts Work](README.md#how-prompts-work).
+
 ## Three Ways to Start a Recording
 
 ### Mode 1 — Describe Your App and Let the Agent Discover It

@@ -41,8 +41,14 @@ WinWright handles the rest.
 ## How Prompts Work
 
 You describe the goal in plain language. The agent decides which tools to call and in what order.
-You never write tool call JSON directly — that is what the examples in these guides show you
+You never write tool call JSON directly — the examples in these guides show you
 *what the agent is doing internally* so you understand what's happening.
+
+**How the agent knows to use WinWright:** Once WinWright is configured as an MCP server,
+the agent sees all `ww_*` tools and their descriptions. When you say "launch the app",
+it discovers `ww_launch`. When you say "click Sign In", it finds `ww_click`. You describe
+the goal — the agent picks the right tools automatically. No need to mention WinWright
+by name in your prompts.
 
 ## Configuration
 
