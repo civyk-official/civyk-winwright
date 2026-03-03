@@ -76,6 +76,8 @@ From inside Claude Code, add the marketplace and install:
 
 The plugin's install script downloads the latest binary automatically.
 
+> **Note:** WinWright has been submitted to the official Claude Code plugin directory and is pending review. Until approved, use the marketplace commands above to install.
+
 ### Binary Download
 
 Download from [GitHub Releases](https://github.com/civyk-official/civyk-winwright/releases):
