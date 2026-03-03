@@ -280,6 +280,21 @@ the Windows desktop, or when you need desktop + browser in one MCP session.
 
 ## Support
 
+**Help keep this project alive and growing!**
+
+If WinWright has helped your development workflow, consider supporting its continued development. Your contribution helps with:
+
+- Ongoing maintenance and bug fixes
+- New feature development
+- Infrastructure costs
+
+**50% of all donations go directly to children's charities** helping those in need. The remaining funds support project maintenance and feature upgrades.
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-orange.svg)](https://buymeacoffee.com/civyk)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Support-blue.svg)](https://ko-fi.com/civyk)
+
+> Every contribution, no matter the size, makes a difference.
+
 - **Issues:** [GitHub Issues](https://github.com/civyk-official/civyk-winwright/issues)
 - **Changelog:** [GitHub Releases](https://github.com/civyk-official/civyk-winwright/releases)
 
