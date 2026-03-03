@@ -67,10 +67,14 @@ you describe the goal in plain language.
 
 ### Claude Code Plugin
 
-```bash
-claude /plugin install https://github.com/civyk-official/civyk-winwright
-powershell -File ~/.claude/plugins/winwright/scripts/install.ps1
+From inside Claude Code, add the marketplace and install:
+
 ```
+/plugin marketplace add civyk-official/civyk-winwright
+/plugin install winwright@civyk-winwright
+```
+
+The plugin's install script downloads the latest binary automatically.
 
 ### Binary Download
 

@@ -1,0 +1,28 @@
+{
+  "name": "civyk-winwright",
+  "owner": {
+    "name": "Civyk",
+    "email": "civyk.official@gmail.com"
+  },
+  "metadata": {
+    "description": "Windows desktop, browser, and system automation MCP server for AI agents"
+  },
+  "plugins": [
+    {
+      "name": "winwright",
+      "source": ".",
+      "description": "110 MCP tools for Windows desktop (WPF, WinForms, Win32), Chrome/Edge browser via CDP, and system management. AI agents describe actions in plain English — no selectors to write or maintain.",
+      "version": "1.1.0",
+      "author": {
+        "name": "Civyk",
+        "email": "civyk.official@gmail.com"
+      },
+      "homepage": "https://github.com/civyk-official/civyk-winwright",
+      "repository": "https://github.com/civyk-official/civyk-winwright",
+      "license": "Freeware",
+      "keywords": ["mcp", "windows", "desktop-automation", "ui-testing", "wpf", "winforms", "rpa", "browser-automation"],
+      "category": "automation",
+      "tags": ["mcp-server", "windows-automation", "test-automation", "desktop", "browser"]
+    }
+  ]
+}
