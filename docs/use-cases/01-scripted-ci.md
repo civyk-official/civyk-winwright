@@ -47,7 +47,8 @@ discovers the controls through `ww_snapshot`, and records the interactions autom
 If you already have manual test cases in Excel, Word, TestRail, CSV, or any
 plain-text format, paste them into your prompt (or provide the file path):
 
-> "Here are our manual test cases. Record each one as a test case in WinWright:
+> "Start a recording session. Here are our manual test cases — record each one as a
+> test case in WinWright, then export the script when done:
 >
 > TC-001: Login — Enter username 'admin', password 'test123', click Sign In,
 > verify dashboard heading contains 'Welcome'
@@ -55,14 +56,16 @@ plain-text format, paste them into your prompt (or provide the file path):
 > verify error message appears
 > ..."
 
-The agent parses the test cases from any format, calls `ww_test_case_start` with the
-matching IDs and titles, navigates the app, and records each step. Your manual test
-library becomes an automated script in one session.
+The agent parses the test cases from any format, starts recording, calls
+`ww_test_case_start` with the matching IDs and titles, navigates the app, records
+each step, and exports the script. Your manual test library becomes an automated
+script in one session.
 
 ### Mode 3 — Record an RPA Task (No Test Cases)
 
-For repetitive workflows with no pass/fail assertions, skip `ww_test_case_start`
-and record a flat step sequence. See [Use Case 04 — Scripted Desktop Automation](04-scripted-desktop-rpa.md).
+For repetitive workflows with no pass/fail assertions, start a recording session,
+skip `ww_test_case_start`, and record a flat step sequence. Export the script when done.
+See [Use Case 04 — Scripted Desktop Automation](04-scripted-desktop-rpa.md) for the full walkthrough.
 
 ## Part A: Recording a Session
 
