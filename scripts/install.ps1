@@ -17,7 +17,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $repo = "civyk-official/civyk-winwright"
-$binDir = Join-Path $PSScriptRoot ".." "bin"
+$binDir = Join-Path (Join-Path $PSScriptRoot "..") "bin"
 
 # Resolve version
 if ($Version -eq "") {
