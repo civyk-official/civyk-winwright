@@ -21,15 +21,15 @@ Each guide is a self-contained tutorial you can follow from first command to res
 
 ## Quick Start — 3 Commands
 
-```bash
-# Install once
-dotnet tool install -g Civyk.WinWright
+Download from [GitHub Releases](https://github.com/civyk-official/civyk-winwright/releases),
+extract, then run:
 
+```bash
 # stdio mode — for Claude Desktop and Claude Code (local machine)
-winwright mcp
+Civyk.WinWright.Mcp.exe mcp
 
 # HTTP mode — for remote access and multi-client setups
-winwright serve --port 8765
+Civyk.WinWright.Mcp.exe serve --port 8765
 ```
 
 Then tell your agent what to do:

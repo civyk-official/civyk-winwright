@@ -1,6 +1,5 @@
 # WinWright
 
-[![NuGet](https://img.shields.io/nuget/v/Civyk.WinWright?label=NuGet)](https://www.nuget.org/packages/Civyk.WinWright)
 [![GitHub Release](https://img.shields.io/github/v/release/civyk-official/civyk-winwright?label=Release)](https://github.com/civyk-official/civyk-winwright/releases)
 [![License](https://img.shields.io/badge/License-Freeware-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4)](https://github.com/civyk-official/civyk-winwright)
@@ -81,14 +80,6 @@ Download from [GitHub Releases](https://github.com/civyk-official/civyk-winwrigh
 |-------|-------------|
 | `winwright-*-win-x64.zip` | Intel/AMD 64-bit |
 | `winwright-*-win-arm64.zip` | ARM64 (Surface Pro, etc.) |
-
-### NuGet Package
-
-```bash
-dotnet tool install -g Civyk.WinWright
-```
-
-Requires .NET 8+ runtime. The binary download above is self-contained and needs no runtime.
 
 ## MCP Client Configuration
 
