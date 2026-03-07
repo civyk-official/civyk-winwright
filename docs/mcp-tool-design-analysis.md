@@ -276,15 +276,9 @@ The bootstrap + discover pattern assumes the MCP client can dynamically add tool
 
 For clients that don't support dynamic tool lists, the fallback is static category filtering via `enabledCategories` in `winwright.json`.
 
-### 8.3 — Minor Merges Have a Real Cost
+### 8.3 — Merges Reduce Tool Count but Don't Solve the Core Problem Alone
 
-Merging `ww_click` + `ww_double_click` + `ww_right_click` into a single tool with `clickType` saves 2 tools but:
-
-- **Breaks backward compatibility** for any existing scripts or agent prompts that reference `ww_double_click` or `ww_right_click` by name
-- **Requires migration** of recorded test scripts that reference the old tool names
-- **Saves only ~8 tools** out of 110 — a 7% reduction that doesn't solve the core problem
-
-The cost-benefit of minor merges should be weighed against the breaking change. If category filtering + tiering alone brings exposure under 30, merges may not be worth the migration pain.
+Merging `ww_click` + `ww_double_click` + `ww_right_click` into a single tool with `clickType` saves 2 tools. Across all safe merges, the total reduction is ~8–10 tools (110 → ~100). This is a 7–9% reduction — helpful but insufficient on its own. Merges should be combined with category filtering + tiering to maximize the reduction.
 
 ### 8.4 — Category Boundaries May Not Match Real Workflows
 
@@ -320,7 +314,7 @@ Reduce the number of tools exposed to any AI agent session to **≤ 30** (the op
 | Tools exposed per session (typical) | 110 | 20–30 (category + tier filtered) |
 | Tools exposed per session (max) | 110 | 110 (power user, explicit opt-in) |
 | Token cost for tool definitions | 11K–33K | 1.2K–9K |
-| Backward compatibility | N/A | Existing scripts must continue to work |
+| Backward compatibility | N/A | Not required — clean break for merged tools |
 
 #### Non-Goals
 
@@ -569,20 +563,20 @@ Default is `"dynamic"` (tiered).
 
 **Acceptance:** A new user reading the README understands how to configure tool filtering for their role. Existing users upgrading see no behavior change (default = all categories, static mode).
 
-#### Phase 9: Optional — Minor Tool Merges
+#### Phase 9: Tool Merges
 
-> This phase is **optional** and should only proceed if category filtering + tiering is insufficient to meet the ≤ 30 tool target for common profiles.
+Merge tools where schemas are identical and the operation is a simple variant. No backward-compatibility aliases — old tool names are removed.
 
 | # | Task | Depends On | Output |
 |---|------|------------|--------|
-| 9.1 | Merge `ww_click` + `ww_double_click` + `ww_right_click` → `ww_click` with `clickType` param | Phase 5 complete | Updated tool |
-| 9.2 | Merge `ww_service_start` + `ww_service_stop` + `ww_service_restart` → `ww_service_control` | Phase 5 complete | Updated tool |
-| 9.3 | Merge `ww_test_case_start` + `ww_test_case_end` → `ww_test_case` | Phase 5 complete | Updated tool |
-| 9.4 | Add backward-compatibility aliases: old tool names route to new tools with default params | 9.1–9.3 | Alias mappings |
-| 9.5 | Update recorded script runner to recognize both old and new tool names | 9.4 | Runner update |
+| 9.1 | Merge `ww_click` + `ww_double_click` + `ww_right_click` → `ww_click` with `clickType: "single"\|"double"\|"right"` (default `"single"`) | Phase 5 complete | Updated tool |
+| 9.2 | Merge `ww_service_start` + `ww_service_stop` + `ww_service_restart` → `ww_service_control` with `action: "start"\|"stop"\|"restart"` | Phase 5 complete | Updated tool |
+| 9.3 | Merge `ww_test_case_start` + `ww_test_case_end` → `ww_test_case` with `action: "start"\|"end"` | Phase 5 complete | Updated tool |
+| 9.4 | Remove old tool registrations (`ww_double_click`, `ww_right_click`, `ww_service_start`, `ww_service_stop`, `ww_service_restart`, `ww_test_case_start`, `ww_test_case_end`) | 9.1–9.3 | Dead code removal |
+| 9.5 | Update recorded script runner to use new tool names only | 9.4 | Runner update |
 | 9.6 | Update all documentation to use new tool names | 9.1–9.3 | Doc updates |
 
-**Acceptance:** Merged tools work identically. Old tool names still work via aliases. Existing scripts replay without modification.
+**Acceptance:** Merged tools work identically to their predecessors. Old tool names no longer exist. Total tool count reduced by ~8 (110 → ~102).
 
 ### 9.4 — New Tool: `ww_type_human` (Human-Speed Typing)
 
@@ -687,10 +681,10 @@ ww_type_human
 **Should-have (maximizes accuracy improvement):**
 - Phase 5 (tier filter) → Phase 6 (`ww_activate_tools`) → Phase 7 (enhanced schema)
 
-**Nice-to-have (polish):**
-- Phase 8 (docs) → Phase 9 (optional merges)
+**Should-have (reduces tool count further):**
+- Phase 8 (docs) → Phase 9 (tool merges)
 
-Category filtering alone (Phases 1–4) gets tool exposure from 110 → 22–45 per session. Adding tiering (Phases 5–7) gets it to 12–15 on connect. Both together achieve the full recommendation.
+Category filtering alone (Phases 1–4) gets tool exposure from 110 → 22–45 per session. Adding tiering (Phases 5–7) gets it to 12–15 on connect. Merges (Phase 9) reduce the total from 110 to ~102, making every filtered view smaller.
 
 ---
 
@@ -702,7 +696,7 @@ The solution is not to collapse tools into fewer mega-tools (which trades one pr
 
 1. **Category-based filtering** — users enable only the categories they need (5-category model: desktop-core, testing, browser, system, agent)
 2. **Bootstrap + discover** — start with core tools, activate more on demand via `ww_activate_tools`
-3. **Minor safe merges** — consolidate only where schemas are truly identical (optional, only if filtering is insufficient)
+3. **Tool merges** — consolidate where schemas are identical (click variants, service control, test case lifecycle)
 
 This preserves WinWright's clean architecture while bringing tool exposure into the optimal range for AI agent performance.
 
