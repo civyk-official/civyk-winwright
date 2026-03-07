@@ -182,22 +182,48 @@ Separating `allowShell`, `allowProcessKill`, etc. is exactly right — it maps o
 
 ## Part 5: Specific Recommendations
 
-### DO: Minor Consolidation Where Tools Are Truly Redundant
+### DO: Aggressive Consolidation of Variant Tools
 
-A few tools can be merged without losing clarity:
+Merge every tool group where the operations share a common schema and differ only by a mode/action value. The guiding rule: if the only difference between two tools is a single enum-like choice and no parameter becomes conditionally required, merge them.
 
-| Current | Proposed | Rationale |
-|---------|----------|-----------|
-| `ww_click` + `ww_double_click` + `ww_right_click` | `ww_click` with `clickType: "single"\|"double"\|"right"` | Same schema, same semantics, only the click type differs. Default to `"single"`. |
-| `ww_service_start` + `ww_service_stop` + `ww_service_restart` | `ww_service_control` with `action: "start"\|"stop"\|"restart"` | Same schema (service name), trivially different operations. |
-| `ww_test_case_start` + `ww_test_case_end` | `ww_test_case` with `action: "start"\|"end"` | Simple state toggle with same context. |
+#### Desktop Interaction Merges
 
-These are safe to merge because:
-- The input schemas are identical (or nearly so)
-- The operation is a simple variant, not a conditional mode
-- No parameter becomes conditionally required
+| Current | Proposed | Saved | Rationale |
+|---------|----------|-------|-----------|
+| `ww_click` + `ww_double_click` + `ww_right_click` + `ww_hover` | `ww_click` with `clickType: "single"\|"double"\|"right"\|"hover"` (default `"single"`) | 3 | All take `appId` + `selector` + optional `windowId`. Hover is a positional action on the same element, not semantically distinct enough to warrant its own tool. |
+| `ww_launch` + `ww_attach` | `ww_app` with `action: "launch"\|"attach"`, `exePath?`, `processId?` | 1 | Both return `appId`. Launch needs `exePath`, attach needs `processId` — conditionally required but trivially so (one of two fields). |
+| `ww_snapshot` + `ww_query` | `ww_inspect` with optional `selector` — omit for full tree, provide for filtered search | 1 | Both read UI state. `ww_snapshot` is `ww_query` without a filter. Merged tool: no selector = full tree, selector = filtered elements. |
+| `ww_get_value` + `ww_assert_value` | `ww_get_value` with optional `op` + `expected` + `message` — if assertion params present, assert; if absent, read-only | 1 | Both target the same element with the same selector. Assertion is a superset of reading. Agent intent is clear from whether `op`/`expected` are provided. |
+| `ww_wait_for` + `ww_wait_for_value` | `ww_wait_for` with optional `property` + `op` + `expected` — if omitted, waits for element existence; if provided, waits for value match | 1 | Schema is a superset. Element-existence wait is value-wait without assertion params. |
+| `ww_wait_for_dialog` + `ww_expect_dialog` | `ww_wait_for_dialog` with optional `title` + `assert: true\|false` — `assert: true` makes it a test assertion (like `ww_expect_dialog`) | 1 | Both wait for a dialog. `expect` adds title matching and assertion semantics. |
+| `ww_record_start` + `ww_record_pop` | `ww_record` with `action: "start"\|"pop"`, optional `count` (for pop) | 1 | Both manage recording state. Pop needs `count`, start doesn't — trivially conditional. |
+| `ww_test_case_start` + `ww_test_case_end` | `ww_test_case` with `action: "start"\|"end"` | 1 | Simple state toggle. |
 
-**Estimated reduction:** ~8–10 tools eliminated, bringing the total to ~100. This alone is insufficient — you still need dynamic filtering.
+#### System Merges
+
+| Current | Proposed | Saved | Rationale |
+|---------|----------|-------|-----------|
+| `ww_service_start` + `ww_service_stop` + `ww_service_restart` | `ww_service_control` with `action: "start"\|"stop"\|"restart"` | 2 | Same schema (service name), trivially different operations. |
+| `ww_process_list` + `ww_process_kill` | `ww_process` with `action: "list"\|"kill"`, optional `processId` (for kill), optional `nameFilter` (for list) | 1 | Both operate on processes. Kill needs PID, list needs filter — trivially conditional. Permission guard on `action: "kill"` replaces tool-level guard. |
+| `ww_registry_read` + `ww_registry_write` | `ww_registry` with `action: "read"\|"write"`, optional `data` + `type` (for write) | 1 | Same key/value targeting. Write adds `data` and `type`. Permission guard on `action: "write"`. |
+
+#### Browser Merges
+
+| Current | Proposed | Saved | Rationale |
+|---------|----------|-------|-----------|
+| `ww_browser_connect` + `ww_browser_disconnect` | `ww_browser_session` with `action: "connect"\|"disconnect"` | 1 | Session lifecycle. Connect needs `debugPort`, disconnect needs nothing — trivially conditional. |
+
+#### Summary
+
+| Category | Tools Before | Tools After | Saved |
+|----------|-------------|-------------|-------|
+| Desktop Interaction | ~20 | ~10 | ~10 |
+| System | ~10 | ~7 | ~3 |
+| Testing/Recording | ~5 | ~3 | ~2 |
+| Browser | ~3 | ~2 | ~1 |
+| **Total** | | | **~16** |
+
+**Estimated reduction:** ~16 tools eliminated, bringing the total from 110 to **~94**. Combined with category filtering + tiering, this puts every filtered view well under the 30-tool threshold.
 
 ### DO: Implement Category-Based Tool Filtering
 
@@ -215,13 +241,13 @@ This is the single highest-impact change. It lets users stay under 30 tools per 
 
 On MCP connection, expose only core tools (~12–15). Include `ww_get_schema` in the bootstrap set. When the agent needs specialized tools, it calls `ww_get_schema` to discover and activate them.
 
-### DON'T: Merge Semantically Distinct Operations
+### DON'T: Merge Operations With Fundamentally Different Semantics
 
-Never merge tools that have different parameter schemas or different semantic meanings:
-- `ww_wait_for` vs `ww_wait_for_value` (different schemas)
-- `ww_snapshot` vs `ww_query` (tree dump vs element search)
-- `ww_click` vs `ww_hover` (interaction vs observation)
-- `ww_assert_value` vs `ww_get_value` (assertion vs read — merging confuses the agent about intent)
+Never merge tools where the operations require completely different mental models:
+- `ww_click` vs `ww_drag` (point action vs source-target action — `drag` needs two selectors)
+- `ww_type` vs `ww_keyboard` (text input vs key commands — different input models)
+- `ww_screenshot` vs `ww_snapshot` (pixel capture vs UIA tree — different output types)
+- `ww_export_script` vs `ww_heal_script` (serialize vs repair — different workflows)
 
 ### DON'T: Create a Generic `ww_execute` Tool
 
@@ -234,11 +260,11 @@ The "single uber-tool" pattern (one tool that accepts arbitrary commands) destro
 | Approach | Tool Count Exposed | Agent Accuracy | Token Cost | Audit Clarity | Implementation Effort |
 |----------|--------------------|----------------|------------|---------------|----------------------|
 | **Current (110 tools, all exposed)** | 110 | Poor | Very High | Excellent | None |
-| **Mega-tool consolidation** | ~25–30 | Medium | Medium | Poor | High (breaking change) |
-| **Minor merges only** | ~100 | Poor | High | Good | Low |
+| **Mega-tool consolidation** | ~25–30 | Medium | Medium | Poor | High |
+| **Aggressive merges only** | ~94 | Poor | High | Good | Medium |
 | **Category filtering** | 15–40 per session | Good | Low | Excellent | Medium |
 | **Bootstrap + discover** | 12–15 initially | Excellent | Very Low | Excellent | Medium |
-| **Category filtering + minor merges** | 12–35 per session | Excellent | Very Low | Excellent | Medium |
+| **Category filtering + aggressive merges** | 10–30 per session | Excellent | Very Low | Excellent | Medium |
 
 **Recommended approach:** Category filtering + bootstrap/discover pattern + minor safe merges.
 
@@ -276,9 +302,9 @@ The bootstrap + discover pattern assumes the MCP client can dynamically add tool
 
 For clients that don't support dynamic tool lists, the fallback is static category filtering via `enabledCategories` in `winwright.json`.
 
-### 8.3 — Merges Reduce Tool Count but Don't Solve the Core Problem Alone
+### 8.3 — Aggressive Merges Reduce Tool Count Significantly but Don't Solve the Core Problem Alone
 
-Merging `ww_click` + `ww_double_click` + `ww_right_click` into a single tool with `clickType` saves 2 tools. Across all safe merges, the total reduction is ~8–10 tools (110 → ~100). This is a 7–9% reduction — helpful but insufficient on its own. Merges should be combined with category filtering + tiering to maximize the reduction.
+Aggressive merging across all categories saves ~16 tools (110 → ~94). This is a 15% reduction — meaningful, and it lowers the ceiling for every filtered view. But 94 tools exposed simultaneously is still in the "guaranteed failure" zone. Merges must be combined with category filtering + tiering to reach the ≤ 30 target.
 
 ### 8.4 — Category Boundaries May Not Match Real Workflows
 
@@ -312,7 +338,7 @@ Reduce the number of tools exposed to any AI agent session to **≤ 30** (the op
 |--------|---------|--------|
 | Tools exposed on connection | 110 | 12–15 (bootstrap set) |
 | Tools exposed per session (typical) | 110 | 20–30 (category + tier filtered) |
-| Tools exposed per session (max) | 110 | 110 (power user, explicit opt-in) |
+| Tools exposed per session (max) | 110 | ~94 (power user, explicit opt-in, after merges) |
 | Token cost for tool definitions | 11K–33K | 1.2K–9K |
 | Backward compatibility | N/A | Not required — clean break for merged tools |
 
@@ -563,20 +589,52 @@ Default is `"dynamic"` (tiered).
 
 **Acceptance:** A new user reading the README understands how to configure tool filtering for their role. Existing users upgrading see no behavior change (default = all categories, static mode).
 
-#### Phase 9: Tool Merges
+#### Phase 9: Aggressive Tool Merges
 
-Merge tools where schemas are identical and the operation is a simple variant. No backward-compatibility aliases — old tool names are removed.
+Merge all tool groups where operations share a common schema and differ only by a mode/action value. Old tool names are removed — no aliases.
+
+**Desktop interaction merges:**
 
 | # | Task | Depends On | Output |
 |---|------|------------|--------|
-| 9.1 | Merge `ww_click` + `ww_double_click` + `ww_right_click` → `ww_click` with `clickType: "single"\|"double"\|"right"` (default `"single"`) | Phase 5 complete | Updated tool |
-| 9.2 | Merge `ww_service_start` + `ww_service_stop` + `ww_service_restart` → `ww_service_control` with `action: "start"\|"stop"\|"restart"` | Phase 5 complete | Updated tool |
-| 9.3 | Merge `ww_test_case_start` + `ww_test_case_end` → `ww_test_case` with `action: "start"\|"end"` | Phase 5 complete | Updated tool |
-| 9.4 | Remove old tool registrations (`ww_double_click`, `ww_right_click`, `ww_service_start`, `ww_service_stop`, `ww_service_restart`, `ww_test_case_start`, `ww_test_case_end`) | 9.1–9.3 | Dead code removal |
-| 9.5 | Update recorded script runner to use new tool names only | 9.4 | Runner update |
-| 9.6 | Update all documentation to use new tool names | 9.1–9.3 | Doc updates |
+| 9.1 | Merge `ww_click` + `ww_double_click` + `ww_right_click` + `ww_hover` → `ww_click` with `clickType: "single"\|"double"\|"right"\|"hover"` (default `"single"`) | Phase 5 complete | Merged tool (saves 3) |
+| 9.2 | Merge `ww_launch` + `ww_attach` → `ww_app` with `action: "launch"\|"attach"`, optional `exePath` / `processId` | Phase 5 complete | Merged tool (saves 1) |
+| 9.3 | Merge `ww_snapshot` + `ww_query` → `ww_inspect` with optional `selector` (omit = full tree, provide = filtered) | Phase 5 complete | Merged tool (saves 1) |
+| 9.4 | Merge `ww_get_value` + `ww_assert_value` → `ww_get_value` with optional `op` + `expected` + `message` (if present = assert, if absent = read-only) | Phase 5 complete | Merged tool (saves 1) |
+| 9.5 | Merge `ww_wait_for` + `ww_wait_for_value` → `ww_wait_for` with optional `property` + `op` + `expected` (if omitted = wait for existence, if present = wait for value match) | Phase 5 complete | Merged tool (saves 1) |
+| 9.6 | Merge `ww_wait_for_dialog` + `ww_expect_dialog` → `ww_wait_for_dialog` with optional `title` + `assert` flag | Phase 5 complete | Merged tool (saves 1) |
 
-**Acceptance:** Merged tools work identically to their predecessors. Old tool names no longer exist. Total tool count reduced by ~8 (110 → ~102).
+**Recording & testing merges:**
+
+| # | Task | Depends On | Output |
+|---|------|------------|--------|
+| 9.7 | Merge `ww_record_start` + `ww_record_pop` → `ww_record` with `action: "start"\|"pop"`, optional `count` | Phase 5 complete | Merged tool (saves 1) |
+| 9.8 | Merge `ww_test_case_start` + `ww_test_case_end` → `ww_test_case` with `action: "start"\|"end"` | Phase 5 complete | Merged tool (saves 1) |
+
+**System merges:**
+
+| # | Task | Depends On | Output |
+|---|------|------------|--------|
+| 9.9 | Merge `ww_service_start` + `ww_service_stop` + `ww_service_restart` → `ww_service_control` with `action: "start"\|"stop"\|"restart"` | Phase 5 complete | Merged tool (saves 2) |
+| 9.10 | Merge `ww_process_list` + `ww_process_kill` → `ww_process` with `action: "list"\|"kill"`. Permission guard on `action: "kill"` | Phase 5 complete | Merged tool (saves 1) |
+| 9.11 | Merge `ww_registry_read` + `ww_registry_write` → `ww_registry` with `action: "read"\|"write"`. Permission guard on `action: "write"` | Phase 5 complete | Merged tool (saves 1) |
+
+**Browser merges:**
+
+| # | Task | Depends On | Output |
+|---|------|------------|--------|
+| 9.12 | Merge `ww_browser_connect` + `ww_browser_disconnect` → `ww_browser_session` with `action: "connect"\|"disconnect"` | Phase 5 complete | Merged tool (saves 1) |
+
+**Cleanup:**
+
+| # | Task | Depends On | Output |
+|---|------|------------|--------|
+| 9.13 | Remove all old tool registrations (16 removed tools) | 9.1–9.12 | Dead code removal |
+| 9.14 | Update recorded script runner to use new tool names only | 9.13 | Runner update |
+| 9.15 | Update permission guards: `allowProcessKill` → guards `ww_process { action: "kill" }`, `allowRegistryWrite` → guards `ww_registry { action: "write" }` | 9.10, 9.11 | Permission migration |
+| 9.16 | Update all documentation and use case examples to use new tool names | 9.1–9.12 | Doc updates |
+
+**Acceptance:** All 16 merges complete. Old tool names removed. Permission guards migrated to action-level checks. Total tool count reduced by ~16 (110 → ~94).
 
 ### 9.4 — New Tool: `ww_type_human` (Human-Speed Typing)
 
@@ -681,10 +739,13 @@ ww_type_human
 **Should-have (maximizes accuracy improvement):**
 - Phase 5 (tier filter) → Phase 6 (`ww_activate_tools`) → Phase 7 (enhanced schema)
 
-**Should-have (reduces tool count further):**
-- Phase 8 (docs) → Phase 9 (tool merges)
+**Should-have (reduces total tool count):**
+- Phase 9 (aggressive merges — can run in parallel with Phases 5–7)
 
-Category filtering alone (Phases 1–4) gets tool exposure from 110 → 22–45 per session. Adding tiering (Phases 5–7) gets it to 12–15 on connect. Merges (Phase 9) reduce the total from 110 to ~102, making every filtered view smaller.
+**Should-have (polish):**
+- Phase 8 (docs)
+
+Category filtering alone (Phases 1–4) gets tool exposure from 110 → 22–45 per session. Aggressive merges (Phase 9) reduce the total from 110 to ~94, lowering every filtered view by ~15%. Adding tiering (Phases 5–7) gets it to 10–15 on connect.
 
 ---
 
