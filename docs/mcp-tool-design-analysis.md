@@ -4,9 +4,17 @@
 
 ## Executive Summary
 
-**Short answer: No — do not blindly consolidate tools into fewer "mega-tools" with mode parameters.**
+**Short answer: No — do not consolidate tools into complex "mega-tools" with conditional parameter schemas. But do merge trivial variants, and pair that with dynamic filtering.**
 
-WinWright's 110 tools are a real concern for AI agent performance, but the right solution is **not** collapsing them into fewer tools with more parameters. Instead, WinWright should adopt **dynamic tool filtering** (exposing only the tools relevant to the current task) and **logical server segmentation** (splitting tools across focused MCP server categories). The tools themselves are well-designed — atomic, single-purpose, clearly named — and that design should be preserved.
+WinWright's 110 tools are a real concern for AI agent performance. The solution has three parts:
+
+1. **Aggressive merging of trivial variants** — where tools share the same schema and differ only by a simple enum (e.g., click type, action verb), merge them. This reduces 110 → ~94. The distinction from harmful mega-tools: merged tools have no conditional parameters or at most one trivially optional field. This is parameter simplification, not parameter explosion.
+
+2. **Dynamic tool filtering** — expose only the tools relevant to the current task via category-based filtering and tiered bootstrap.
+
+3. **Logical server segmentation** — split tools across 5 focused categories so each category stays under 30 tools.
+
+Merging alone saves only ~16 tools (15%) — not enough. Filtering alone works but leaves the total tool count unnecessarily high. Together they bring per-session exposure to 10–30 tools, well within the optimal range.
 
 ---
 
@@ -43,57 +51,59 @@ When an AI agent connects to WinWright, it receives all 110 tool definitions in 
 
 ---
 
-## Part 2: The Wrong Solution — Consolidating Into Fewer "Mega-Tools"
+## Part 2: The Wrong Solution — Complex Mega-Tools With Conditional Schemas
 
-The instinctive response is: "Merge related tools into one tool with a mode/action parameter." For example:
+The instinctive response is: "Merge related tools into one tool with a mode/action parameter." When taken too far, this creates **mega-tools** — tools where the parameter schema changes depending on a mode value, and most parameters are conditionally required. For example:
 
 ```
-# Instead of 5 separate tools:
-ww_click, ww_double_click, ww_hover, ww_right_click, ww_drag
-
-# Create one tool:
-ww_mouse_action { action: "click"|"double_click"|"hover"|"right_click"|"drag", ... }
+# Mega-tool: 5 operations with different schemas crammed into one tool
+ww_mouse_action {
+  action: "click"|"double_click"|"hover"|"right_click"|"drag",
+  selector,           # required for all
+  targetSelector?,    # required for drag only
+  offsetX?, offsetY?  # required for drag only
+}
 ```
 
-**This is a bad idea.** Here's why:
+**Mega-tools with conditional schemas are a bad idea.** Here's why:
 
-### 2.1 — It Violates the MCP Design Principle of Atomicity
+> **Note:** This does not apply to merging trivial variants where the schema is identical and only a simple enum differs (e.g., `clickType: "single"|"double"|"right"`). Those merges are safe and recommended — see Part 5.
 
-Docker's official MCP best practices state: *"Design tools to perform a single, well-scoped task."* The MCP spec intentionally models tools as discrete operations with typed input schemas — not as multi-mode dispatchers. Consolidating tools into mega-tools with `action` parameters:
+### 2.1 — Mega-Tools Violate the MCP Design Principle of Atomicity
 
-- Turns a **typed, discoverable API** into an **untyped string-dispatched** one
+Docker's official MCP best practices state: *"Design tools to perform a single, well-scoped task."* The MCP spec intentionally models tools as discrete operations with typed input schemas — not as multi-mode dispatchers. Consolidating semantically different operations into mega-tools with `action` parameters:
+
 - Loses JSON Schema validation per operation (a `click` needs different params than a `drag`)
 - Makes tool descriptions vague ("performs a mouse action" vs "clicks an element")
+- Forces conditional parameter logic that LLMs handle poorly
 
-### 2.2 — It Makes Agent Selection Harder, Not Easier
+The key distinction: merging `ww_click` + `ww_double_click` (same schema, same semantics, trivial enum) preserves atomicity — the tool still does one thing (click an element) with a variant. Merging `ww_click` + `ww_drag` (different schemas, different semantics) violates it.
 
-When tools are consolidated, the agent must now:
+### 2.2 — Conditional Schemas Make Agent Selection Harder, Not Easier
+
+When tools are consolidated into mega-tools with conditional parameters, the agent must now:
 1. Select the right mega-tool (easier — fewer options)
 2. **Then** select the right `action` parameter value (harder — no schema guidance)
 3. **Then** figure out which parameters apply to that action (hardest — conditional schemas)
 
-Research shows LLMs handle **tool selection** (pick from a list of typed tools) better than **parameter inference** (pick the right enum value and its conditional parameters). You're trading a problem the model handles well (choosing between clearly defined tools) for one it handles poorly (navigating conditional parameter logic).
+Research shows LLMs handle **tool selection** (pick from a list of typed tools) better than **complex parameter inference** (navigate conditional schemas where most parameters are sometimes-required). The failure mode is conditional schemas — not simple enum parameters. A `clickType: "single"|"double"` with no other parameter changes is trivial for the model. A `mode: "element"|"value"|"dialog"` where 5 parameters change their required/ignored status depending on mode is where models fail.
 
-### 2.3 — It Breaks Tool-Level Permissions and Auditing
+### 2.3 — It Can Break Tool-Level Permissions and Auditing
 
-WinWright has a permission system (`allowShell`, `allowProcessKill`, `allowServiceControl`). These map cleanly to individual tools. If `ww_process_kill` is merged into `ww_process_manage { action: "kill" }`, the permission check moves from "is this tool allowed?" to "is this tool allowed with this parameter value?" — adding runtime parsing complexity and audit ambiguity.
+WinWright has a permission system (`allowShell`, `allowProcessKill`, `allowServiceControl`). These map cleanly to individual tools. Merging permission-guarded tools into mega-tools moves the check from "is this tool allowed?" to "is this tool allowed with this parameter value?" — adding runtime parsing complexity.
+
+This is acceptable for simple action-level guards (e.g., `ww_process { action: "kill" }` guarded by `allowProcessKill`) where the permission maps to a single enum value. It becomes problematic in mega-tools where multiple parameters interact to determine whether an operation is dangerous.
 
 ### 2.4 — It Degrades Error Messages
 
 Atomic tools produce clear errors: `"ww_click failed: element not found"`. A mega-tool produces: `"ww_mouse_action failed"` — was it the click? The hover? The drag? The agent and the human reviewing audit logs both lose diagnostic clarity.
 
-### 2.5 — Concrete Example: Why Merging Fails
+### 2.5 — Concrete Example: Mega-Tool vs Safe Merge
 
-Consider consolidating all "wait" tools:
+**Bad: Merging all 4 wait tools into one mega-tool with a mode parameter:**
 
 ```
-# Current (4 tools, each crystal clear):
-ww_wait_for         { selector, timeoutMs }
-ww_wait_for_value   { selector, property, op, expected, timeoutMs }
-ww_wait_for_dialog  { timeoutMs }
-ww_expect_dialog    { title, timeoutMs }
-
-# Consolidated (1 tool, confusing):
+# Mega-tool (1 tool, 4 modes, 7 params, most conditionally required):
 ww_wait {
   mode: "element"|"value"|"dialog"|"expect_dialog",
   selector?,      # required for element/value, ignored for dialog
@@ -105,7 +115,23 @@ ww_wait {
 }
 ```
 
-The consolidated version has 7 parameters, most conditionally required based on `mode`. The model must reason about which parameters apply. This is strictly worse for LLM tool calling — conditional parameter schemas are a known failure mode.
+This has 7 parameters with complex conditional logic. The model must reason about which 4 of 6 optional parameters apply to each mode. This is strictly worse for LLM tool calling.
+
+**Good: Merging pairs with superset schemas:**
+
+```
+# ww_wait_for absorbs ww_wait_for_value (superset schema):
+ww_wait_for { selector, timeoutMs, property?, op?, expected? }
+# No property/op/expected → waits for element existence
+# With property/op/expected → waits for value match
+
+# ww_wait_for_dialog absorbs ww_expect_dialog (superset schema):
+ww_wait_for_dialog { timeoutMs, title?, assert? }
+# No title → waits for any dialog
+# With title + assert → asserts specific dialog appeared
+```
+
+Each merged tool adds 1–3 optional parameters that extend behavior without changing the core operation. No `mode` parameter, no conditional required fields. The model treats missing optional params as "don't care" — a pattern LLMs handle well.
 
 ---
 
@@ -115,31 +141,31 @@ The consolidated version has 7 parameters, most conditionally required based on 
 
 WinWright's 110 tools fall into 5 natural categories that align with its existing architecture. These should be exposed as selectable profiles:
 
-| Category | Tools | Count | Use Cases |
-|----------|-------|-------|-----------|
-| **Desktop Core** | Launch, attach, click, type, snapshot, query, get_value, screenshot, wait, select, hover, drag, keyboard, dialogs | ~35 | UC-02, UC-03, UC-05, UC-06, UC-10, UC-11 |
-| **Recording & Testing** | Record start/pop, test case start/end, export script, heal script, assert_value | ~15 | UC-01, UC-04 |
-| **Browser** | CDP connect, navigate, find, click, type, screenshot, eval JS, tab/window mgmt | 15 | UC-07 |
-| **System** | Process list/kill, service list/start/stop/restart, registry read/write, shell, file, env vars, scheduled tasks, network | 22 | UC-08, UC-09 |
-| **AI Agent** | get_schema, snapshots, state diffing, event watching, action recording | 10 | All (bootstrap) |
+| Category | Tools (post-merge names) | Count | Use Cases |
+|----------|--------------------------|-------|-----------|
+| **Desktop Core** | `ww_app`, `ww_click`, `ww_type`, `ww_type_human`, `ww_inspect`, `ww_get_value`, `ww_screenshot`, `ww_wait_for`, `ww_wait_for_dialog`, `ww_select`, `ww_drag`, `ww_keyboard`, `ww_handle_message_box`, `ww_get_table_data`, ... | ~27 | UC-02, UC-03, UC-05, UC-06, UC-10, UC-11 |
+| **Recording & Testing** | `ww_record`, `ww_test_case`, `ww_export_script`, `ww_heal_script`, ... | ~13 | UC-01, UC-04 |
+| **Browser** | `ww_browser_session`, `ww_browser_navigate`, `ww_browser_find`, `ww_browser_click`, `ww_browser_type`, `ww_browser_screenshot`, ... | ~14 | UC-07 |
+| **System** | `ww_process`, `ww_service_list`, `ww_service_control`, `ww_registry`, `ww_shell`, `ww_file_read`, ... | ~18 | UC-08, UC-09 |
+| **AI Agent** | `ww_get_schema`, `ww_activate_tools`, state diffing, event watching, action recording | ~10 | All (bootstrap) |
 
-**Why 5 categories, not 2 (desktop vs system)?** Desktop Automation alone is 63 tools — still double the ~30-tool degradation threshold. Splitting desktop into "core interaction" (~35) and "recording/testing" (~15) keeps both halves under the sweet spot. Users doing ad-hoc automation load Desktop Core only. Users building CI test suites load Desktop Core + Recording & Testing.
+**Why 5 categories, not 2 (desktop vs system)?** Even after aggressive merges, loading all desktop tools at once (core ~27 + recording ~13 = 40) exceeds the 30-tool threshold. Splitting desktop into "core interaction" (~27) and "recording/testing" (~13) keeps both under the sweet spot. Users doing ad-hoc automation load Desktop Core only. Users building CI test suites load Desktop Core + Recording & Testing.
 
 #### Typical Profile Combinations
 
-| User Role | Categories Loaded | Tool Count |
-|-----------|-------------------|------------|
-| QA engineer (CI scripting) | Desktop Core + Recording & Testing + AI Agent | ~60 → filtered to ~30 via tiering |
-| Ad-hoc automation | Desktop Core + AI Agent | ~45 → filtered to ~20 via tiering |
-| Sysadmin (remote) | System + AI Agent | ~32 → filtered to ~22 via tiering |
-| Cross-app workflow | Desktop Core + Browser + AI Agent | ~60 → filtered to ~30 via tiering |
-| Power user | All | 110 (understands the tradeoff) |
+| User Role | Categories Loaded | Tool Count (post-merge) |
+|-----------|-------------------|------------------------|
+| QA engineer (CI scripting) | Desktop Core + Recording & Testing + AI Agent | ~50 → filtered to ~25 via tiering |
+| Ad-hoc automation | Desktop Core + AI Agent | ~37 → filtered to ~15 via tiering |
+| Sysadmin (remote) | System + AI Agent | ~28 (under 30 — tiering optional) |
+| Cross-app workflow | Desktop Core + Browser + AI Agent | ~51 → filtered to ~25 via tiering |
+| Power user | All | ~94 (understands the tradeoff) |
 
 ### 3.2 — Dynamic Tool Activation via `ww_get_schema`
 
 WinWright already has `ww_get_schema` for tool discovery. Extend this pattern:
 
-1. On startup, expose only a **bootstrap set** of ~10–15 essential tools (launch, attach, snapshot, click, type, get_value, screenshot, get_schema)
+1. On startup, expose only a **bootstrap set** of ~10–15 essential tools (`ww_app`, `ww_inspect`, `ww_click`, `ww_type`, `ww_get_value`, `ww_screenshot`, `ww_get_schema`, `ww_activate_tools`)
 2. When the agent calls `ww_get_schema`, it discovers the full catalog organized by category
 3. The agent (or middleware) activates additional tools on demand based on the task
 
@@ -151,9 +177,9 @@ Classify tools by frequency of use:
 
 | Tier | Description | Example Tools | Exposure |
 |------|-------------|---------------|----------|
-| **Core** | Used in almost every session | `ww_launch`, `ww_click`, `ww_type`, `ww_snapshot`, `ww_screenshot`, `ww_get_value` | Always loaded |
-| **Extended** | Used in specific workflows | `ww_wait_for`, `ww_select`, `ww_get_table_data`, `ww_assert_value` | Loaded on demand |
-| **Specialized** | Rare or admin-only | `ww_heal_script`, `ww_registry_write`, `ww_task_scheduler_create`, `ww_shell` | Loaded explicitly |
+| **Core** | Used in almost every session | `ww_app`, `ww_click`, `ww_type`, `ww_inspect`, `ww_screenshot`, `ww_get_value` | Always loaded |
+| **Extended** | Used in specific workflows | `ww_wait_for`, `ww_select`, `ww_get_table_data`, `ww_type_human` | Loaded on demand |
+| **Specialized** | Rare or admin-only | `ww_heal_script`, `ww_registry`, `ww_task_scheduler_create`, `ww_shell` | Loaded explicitly |
 
 A core set of ~12–15 tools covers 80% of use cases. The agent requests more when needed.
 
@@ -163,8 +189,8 @@ A core set of ~12–15 tools covers 80% of use cases. The agent requests more wh
 
 Before suggesting changes, it's important to acknowledge what's already well-designed:
 
-### 4.1 — Atomic, Single-Purpose Tools
-Each tool does one thing. `ww_click` clicks. `ww_type` types. `ww_screenshot` takes a screenshot. This is exactly what MCP best practices prescribe. **Do not change this.**
+### 4.1 — Focused, Well-Scoped Tools
+Each tool targets one operation. `ww_click` clicks. `ww_type` types. `ww_screenshot` takes a screenshot. Trivial variants of the same operation (single-click vs double-click, read vs assert) can be absorbed into a single tool with an enum or optional params without losing this focus — the tool still does one thing, just with a variant. What must be avoided is cramming semantically different operations into one tool (see Part 2).
 
 ### 4.2 — Consistent Naming Convention
 The `ww_` prefix with verb-noun naming (`ww_get_value`, `ww_wait_for_dialog`, `ww_handle_message_box`) is clear and predictable. The agent can infer tool purpose from the name alone.
@@ -184,7 +210,12 @@ Separating `allowShell`, `allowProcessKill`, etc. is exactly right — it maps o
 
 ### DO: Aggressive Consolidation of Variant Tools
 
-Merge every tool group where the operations share a common schema and differ only by a mode/action value. The guiding rule: if the only difference between two tools is a single enum-like choice and no parameter becomes conditionally required, merge them.
+Merge every tool group where the operations share a common schema and differ only by a simple variant. The guiding rules (aligned with Part 2's criteria for safe merging):
+
+1. **No conditional required parameters** — adding optional params that extend behavior is fine; adding params that are required-for-some-modes-and-ignored-for-others is not
+2. **No mode dispatcher** — prefer a single enum (`clickType`) or optional superset params over a `mode`/`action` string that changes the tool's meaning
+3. **Same core operation** — the tool name should still accurately describe what it does (e.g., `ww_click` still clicks; `ww_get_value` still gets a value, optionally asserting it)
+4. **Permission guards remain unambiguous** — if a tool merges a guarded operation, the guard maps to exactly one enum value (e.g., `action: "kill"`)
 
 #### Desktop Interaction Merges
 
@@ -266,7 +297,7 @@ The "single uber-tool" pattern (one tool that accepts arbitrary commands) destro
 | **Bootstrap + discover** | 12–15 initially | Excellent | Very Low | Excellent | Medium |
 | **Category filtering + aggressive merges** | 10–30 per session | Excellent | Very Low | Excellent | Medium |
 
-**Recommended approach:** Category filtering + bootstrap/discover pattern + minor safe merges.
+**Recommended approach:** Aggressive variant merges + category filtering + bootstrap/discover pattern.
 
 ---
 
@@ -274,23 +305,23 @@ The "single uber-tool" pattern (one tool that accepts arbitrary commands) destro
 
 | MCP Best Practice | WinWright Current | Recommendation |
 |-------------------|-------------------|----------------|
-| Atomic, single-purpose tools | Compliant | Keep as-is |
+| Focused, well-scoped tools | Compliant | Merge trivial variants; keep operations focused |
 | Clear, descriptive naming | Compliant | Keep as-is |
 | Typed JSON Schema inputs | Compliant | Keep as-is |
 | Focused, scoped servers | Non-compliant (110 tools in one server) | Add category filtering / multiple profiles |
 | Manage tool budget (< 30) | Non-compliant | Dynamic filtering brings this into range |
 | Error messages for agents | Compliant (structured JSON) | Keep as-is |
-| Tool-level permissions | Compliant | Keep as-is; do not merge permission boundaries |
+| Tool-level permissions | Compliant | Migrate to action-level guards where tools are merged (e.g., `ww_process { action: "kill" }`) |
 
 ---
 
 ## Part 8: Critique and Open Questions
 
-### 8.1 — Desktop Core at 35 Tools Still Exceeds the Threshold
+### 8.1 — Multi-Category Combinations Still Exceed the Threshold
 
-Even after splitting Desktop Automation into Core (~35) and Recording/Testing (~15), the Desktop Core category alone exceeds the optimal 30-tool threshold. This means category filtering alone is insufficient — it must be combined with tiered exposure (Section 3.3) to bring the initial tool set down to ~12–15 core tools. Without tiering, a user who loads only Desktop Core still sees 35 tools, which is above the confusion onset point.
+After aggressive merges, individual categories are under 30 (Desktop Core ~27, Recording ~13, Browser ~14, System ~18, Agent ~10). But common multi-category combinations still exceed it: QA engineer (Desktop Core + Recording + Agent = ~50), cross-app workflow (Desktop Core + Browser + Agent = ~51). Category filtering alone is insufficient for these users — tiered exposure (Section 3.3) is needed to bring the initial tool set down to ~12–15 core tools, with the rest activated on demand.
 
-**Mitigation:** Tier 1 (always loaded) should be capped at 12–15 tools even within a category. The remaining Desktop Core tools (~20) should be Tier 2, activated on demand via `ww_get_schema`.
+**Mitigation:** Tier 1 (always loaded) should be capped at 12–15 tools even across multiple categories. The remaining tools should be Tier 2/3, activated on demand via `ww_activate_tools`.
 
 ### 8.2 — The `ww_get_schema` Bootstrap Pattern Requires MCP Client Support
 
@@ -345,9 +376,9 @@ Reduce the number of tools exposed to any AI agent session to **≤ 30** (the op
 #### Non-Goals
 
 - Rewriting tool implementations (tools are well-designed as-is)
-- Changing tool naming conventions
-- Removing any tools
-- Altering the permission/audit system
+- Creating mega-tools with complex conditional schemas (see Part 2)
+- Removing tool capabilities (merges consolidate variant tools but preserve all operations)
+- Removing the permission/audit system (permission guards migrate to action-level where tools are merged)
 
 ### 9.2 — How (Technical Implementation)
 
@@ -356,9 +387,9 @@ Reduce the number of tools exposed to any AI agent session to **≤ 30** (the op
 The implementation adds three layers between tool registration and tool exposure:
 
 ```
-┌──────────────────────────────────────────────────┐
-│  Tool Registry (all 110 tools, always registered) │
-└──────────────────┬───────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│  Tool Registry (~94 post-merge tools, all registered) │
+└──────────────────┬──────────────────────────────────┘
                    │
           ┌────────▼────────┐
           │  Category Filter │ ← winwright.json: enabledCategories
@@ -380,8 +411,10 @@ Each tool definition gets two new metadata fields:
 
 ```csharp
 [McpTool("ww_click", Category = "desktop-core", Tier = ToolTier.Core)]
+[McpTool("ww_app", Category = "desktop-core", Tier = ToolTier.Core)]
 [McpTool("ww_heal_script", Category = "testing", Tier = ToolTier.Specialized)]
-[McpTool("ww_browser_connect", Category = "browser", Tier = ToolTier.Core)]
+[McpTool("ww_browser_session", Category = "browser", Tier = ToolTier.Core)]
+[McpTool("ww_service_control", Category = "system", Tier = ToolTier.Extended)]
 [McpTool("ww_shell", Category = "system", Tier = ToolTier.Specialized)]
 [McpTool("ww_get_schema", Category = "agent", Tier = ToolTier.Core)]
 ```
@@ -462,8 +495,8 @@ Current `ww_get_schema` returns tool descriptions. Enhanced version adds:
     "system": { ... },
     "agent": { ... }
   },
-  "activeTool Count": 15,
-  "totalToolCount": 110
+  "activeToolCount": 15,
+  "totalToolCount": 94
 }
 ```
 
@@ -497,7 +530,7 @@ Default is `"dynamic"` (tiered).
 
 | # | Task | Depends On | Output |
 |---|------|------------|--------|
-| 1.1 | Audit all 110 tools: extract name, current category, parameter schema, permission guard (if any) | — | `docs/tool-inventory.csv` |
+| 1.1 | Audit all ~94 post-merge tools: extract name, current category, parameter schema, permission guard (if any) | — | `docs/tool-inventory.csv` |
 | 1.2 | Assign each tool a category (`desktop-core`, `testing`, `browser`, `system`, `agent`) | 1.1 | Updated inventory |
 | 1.3 | Assign each tool a tier (`core`, `extended`, `specialized`) based on use-case frequency analysis | 1.1, 1.2 | Updated inventory |
 | 1.4 | Validate that the bootstrap set (Tier 1 core tools across all categories) is ≤ 15 tools | 1.3 | Validation report |
@@ -523,11 +556,11 @@ Default is `"dynamic"` (tiered).
 |---|------|------------|--------|
 | 3.1 | Define `ToolCategory` enum and `ToolTier` enum | 1.2, 1.3 | Enum types |
 | 3.2 | Add `Category` and `Tier` metadata to tool registration (attribute or builder pattern) | 3.1 | Updated tool registrations |
-| 3.3 | Annotate all 110 tools with their category and tier (per inventory from Phase 1) | 3.2, 1.2, 1.3 | All tools annotated |
+| 3.3 | Annotate all ~94 post-merge tools with their category and tier (per inventory from Phase 1) | 3.2, 1.2, 1.3 | All tools annotated |
 | 3.4 | Build `ToolRegistry` class that holds all tools with metadata, supports filtering by category + tier | 3.3 | Registry class |
 | 3.5 | Unit tests for `ToolRegistry` filtering logic | 3.4 | Test suite |
 
-**Acceptance:** `ToolRegistry.GetTools(categories: ["desktop-core"], maxTier: Core)` returns exactly the expected subset. All 110 tools are annotated.
+**Acceptance:** `ToolRegistry.GetTools(categories: ["desktop-core"], maxTier: Core)` returns exactly the expected subset. All ~94 post-merge tools are annotated.
 
 #### Phase 4: Category Filter (Static Filtering)
 
@@ -539,7 +572,7 @@ Default is `"dynamic"` (tiered).
 | 4.4 | Wire CLI `--categories` flag to override config at runtime | 2.3, 4.1 | CLI override |
 | 4.5 | Integration test: connect with `enabledCategories: ["system"]`, verify only system + agent tools are listed | 4.2, 4.3 | Integration test |
 
-**Acceptance:** MCP client connecting to a server configured with `enabledCategories: ["system"]` sees only system + agent tools (~32). All other tools are hidden.
+**Acceptance:** MCP client connecting to a server configured with `enabledCategories: ["system"]` sees only system + agent tools (~28). All other tools are hidden.
 
 #### Phase 5: Tier Filter (Dynamic Filtering)
 
@@ -751,15 +784,15 @@ Category filtering alone (Phases 1–4) gets tool exposure from 110 → 22–45 
 
 ## Conclusion
 
-WinWright's individual tools are well-designed — atomic, consistently named, type-safe, and permission-guarded. The problem is not tool design; it's **tool exposure**. Exposing all 110 tools simultaneously overwhelms the AI agent's selection capability.
+WinWright's tools are well-designed — focused, consistently named, type-safe, and permission-guarded. The problem is not tool design; it's **tool exposure**. Exposing all tools simultaneously overwhelms the AI agent's selection capability.
 
-The solution is not to collapse tools into fewer mega-tools (which trades one problem for several worse ones), but to **control how many tools the agent sees at any given time** through:
+The solution combines three mechanisms, each insufficient alone but effective together:
 
-1. **Category-based filtering** — users enable only the categories they need (5-category model: desktop-core, testing, browser, system, agent)
-2. **Bootstrap + discover** — start with core tools, activate more on demand via `ww_activate_tools`
-3. **Tool merges** — consolidate where schemas are identical (click variants, service control, test case lifecycle)
+1. **Aggressive variant merges** (110 → ~94) — consolidate trivial variants that share the same schema, saving ~16 tools. This is not mega-tool consolidation: merged tools add a simple enum or optional superset params, never conditional required fields.
+2. **Category-based filtering** (~94 → 18–51 per session) — users enable only the categories they need. Five categories (desktop-core, testing, browser, system, agent) keep individual categories under 30.
+3. **Tiered bootstrap + discover** (per-session → 10–15 on connect) — start with core tools, activate more on demand via `ww_activate_tools`. Essential for multi-category users whose combined tool count exceeds 30.
 
-This preserves WinWright's clean architecture while bringing tool exposure into the optimal range for AI agent performance.
+Merges alone save only 15% — not enough. Categories alone leave multi-category users above 30. Tiers alone require client support for `tools/list_changed`. Together, they bring per-session exposure to 10–30 tools, well within the optimal range, with graceful fallbacks for every client type.
 
 ---
 
