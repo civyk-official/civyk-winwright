@@ -10,7 +10,7 @@ requires scripting every step upfront. When the workflow changes, the script bre
 
 ## How WinWright Helps
 
-An AI agent sees the screen through `ww_snapshot`, understands the current state, and
+An AI agent sees the screen through `ww_inspect`, understands the current state, and
 decides what to do next. It launches apps, navigates menus, types into fields, clicks
 buttons, and verifies results — all through natural conversation.
 
@@ -18,6 +18,7 @@ buttons, and verifies results — all through natural conversation.
 
 - WinWright configured as an MCP server in your AI agent —
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
+- Recommended config: `"enabledCategories": ["desktop-core"]`
 - The target app must expose its controls via Windows UI Automation (most WinForms, WPF,
   and Win32 apps do)
 
@@ -34,8 +35,8 @@ buttons, and verifies results — all through natural conversation.
 #### Launch the app
 
 ```json
-ww_launch
-  { "exePath": "C:\\Finance\\ExpenseApp.exe" }
+ww_app
+  { "action": "launch", "exePath": "C:\\Finance\\ExpenseApp.exe" }
 ```
 
 Response:
@@ -47,7 +48,7 @@ Response:
 #### Read the current UI state
 
 ```json
-ww_snapshot
+ww_inspect
   { "appId": "app-3c4d" }
 ```
 
@@ -81,7 +82,7 @@ Response:
 #### Read the form
 
 ```json
-ww_snapshot
+ww_inspect
   { "appId": "app-3c4d" }
 ```
 
@@ -187,14 +188,14 @@ The agent reports:
   See [Dialog and Modal Handling](11-dialog-handling.md) for patterns.
 - For dropdown lists that don't respond to `ww_select`, try: "click the Category dropdown, then
   click Travel in the list that appears"
-- `ww_snapshot` returns the current element tree — calling it before acting helps the agent
+- `ww_inspect` returns the current element tree — calling it before acting helps the agent
   locate controls even when the form layout changes between versions
 
 ## Limitations
 
 - Some admin operations (registry, services, process kill) are disabled by default;
   enable them in `winwright.json` if needed
-- Controls that respond only to mouse hover (not keyboard) may need `ww_hover` first
+- Controls that respond only to mouse hover (not keyboard) may need `ww_click` with `clickType: "hover"` first
 
 ---
 

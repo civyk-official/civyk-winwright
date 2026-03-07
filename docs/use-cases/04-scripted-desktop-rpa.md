@@ -37,6 +37,7 @@ Use RPA mode when you want to automate a task, not verify an outcome.
 
 - WinWright configured as an MCP server in your AI agent —
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
+- Recommended config: `"enabledCategories": ["desktop-core", "testing"]`
 - The task involves one or more Windows apps (desktop, with UIA-accessible controls)
 
 ## Example: Daily Report Export and Import
@@ -58,8 +59,8 @@ ImportTool, load the CSV, and click Process.
 #### Start recording (RPA mode — no test cases)
 
 ```json
-ww_record_start
-  { "appId": "app-rpa1" }
+ww_record
+  { "action": "start", "appId": "app-rpa1" }
 ```
 
 Response:
@@ -68,13 +69,13 @@ Response:
 { "started": true }
 ```
 
-No `ww_test_case_start` is called. All steps go into a flat list — this is RPA mode.
+No `ww_test_case` is called. All steps go into a flat list — this is RPA mode.
 
 #### Launch and operate the reporting app
 
 ```json
-ww_launch
-  { "exePath": "C:\\Tools\\ReportingApp.exe" }
+ww_app
+  { "action": "launch", "exePath": "C:\\Tools\\ReportingApp.exe" }
 ```
 
 ```json
@@ -116,8 +117,8 @@ ww_click
 #### Launch and operate the import tool
 
 ```json
-ww_launch
-  { "exePath": "C:\\Tools\\ImportTool.exe" }
+ww_app
+  { "action": "launch", "exePath": "C:\\Tools\\ImportTool.exe" }
 ```
 
 ```json
@@ -147,8 +148,8 @@ ww_click
 If a wrong step was recorded:
 
 ```json
-ww_record_pop
-  { "appId": "app-rpa1", "count": 1 }
+ww_record
+  { "action": "pop", "appId": "app-rpa1", "count": 1 }
 ```
 
 See [Use Case 01 — Part B: Correcting a Recording](01-scripted-ci.md#part-b-correcting-a-recording)
@@ -192,11 +193,11 @@ The agent writes the JSON content to the file (requires `allowFileWrite: true` i
     "maxFailures": 0
   },
   "steps": [
-    { "tool": "ww_launch",    "extra": "{\"exePath\":\"C:\\\\Tools\\\\ReportingApp.exe\"}", "timestamp": "..." },
+    { "tool": "ww_app",    "extra": "{\"action\":\"launch\",\"exePath\":\"C:\\\\Tools\\\\ReportingApp.exe\"}", "timestamp": "..." },
     { "tool": "ww_click",     "selector": "Name:Sales Reports",  "timestamp": "..." },
     { "tool": "ww_type",      "selector": "Name:From Date",      "timestamp": "..." },
     { "tool": "ww_click",     "selector": "Name:Export",         "timestamp": "..." },
-    { "tool": "ww_launch",    "extra": "{\"exePath\":\"C:\\\\Tools\\\\ImportTool.exe\"}", "timestamp": "..." },
+    { "tool": "ww_app",    "extra": "{\"action\":\"launch\",\"exePath\":\"C:\\\\Tools\\\\ImportTool.exe\"}", "timestamp": "..." },
     { "tool": "ww_click",     "selector": "Name:Process",        "timestamp": "..." }
   ]
 }

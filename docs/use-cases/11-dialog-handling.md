@@ -19,6 +19,7 @@ WinWright handles UIA-based dialogs (WPF, WinForms) and Win32 MessageBox popups.
 
 - WinWright configured as an MCP server in your AI agent —
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
+- Recommended config: `"enabledCategories": ["desktop-core"]`
 - The target app and its dialogs must be UIA-accessible
 
 ## Pattern 1 — Detect and Handle Confirmation Dialogs
@@ -33,13 +34,13 @@ WinWright handles UIA-based dialogs (WPF, WinForms) and Win32 MessageBox popups.
 #### Open the customer record
 
 ```json
-ww_query
+ww_inspect
   { "appId": "app-1a2b", "selector": "Name:Acme Corp" }
 ```
 
 ```json
-ww_double_click
-  { "appId": "app-1a2b", "selector": "Name:Acme Corp" }
+ww_click
+  { "appId": "app-1a2b", "selector": "Name:Acme Corp", "clickType": "double" }
 ```
 
 #### Edit the contact name
@@ -62,7 +63,7 @@ ww_click
 After any click that might trigger a dialog, the agent calls:
 
 ```json
-ww_query
+ww_inspect
   { "appId": "app-1a2b", "selector": "type=Window" }
 ```
 
@@ -80,7 +81,7 @@ Response — dialog detected:
 #### Read the dialog content
 
 ```json
-ww_snapshot
+ww_inspect
   { "appId": "app-1a2b", "windowId": "h-dlg1" }
 ```
 
@@ -124,7 +125,7 @@ The dialog closes and the record is saved.
 After the export menu click triggers the save dialog:
 
 ```json
-ww_query
+ww_inspect
   { "appId": "app-1a2b", "selector": "type=Window" }
 ```
 
@@ -153,7 +154,7 @@ ww_click
 #### Handle the "file already exists" overwrite prompt (if it appears)
 
 ```json
-ww_query
+ww_inspect
   { "appId": "app-1a2b", "selector": "type=Window" }
 ```
 
@@ -195,7 +196,7 @@ Response:
 { "found": true, "windowId": "h-dlg2", "title": "Confirm Delete", "elapsedMs": 340 }
 ```
 
-This is more reliable than polling with `ww_query` — it waits for the dialog
+This is more reliable than polling with `ww_inspect` — it waits for the dialog
 to appear rather than checking immediately.
 
 ## Telling Your Agent to Handle Dialogs Automatically
@@ -212,13 +213,13 @@ The agent will apply this policy throughout the session without being reminded f
 - Scope dialog searches with `windowId` to avoid confusing the main window with the dialog
 - For apps that show many dialogs, list the expected ones in your prompt: "There may be
   a 'License agreement' dialog on first run — accept it and continue"
-- `ww_expect_dialog` can be used to assert that a specific dialog appeared (useful in test
+- `ww_wait_for_dialog` with `title` and `assert: true` can be used to assert that a specific dialog appeared (useful in test
   recordings as a verification step)
 
 ## Limitations
 
 - Custom-drawn dialog overlays that do not create a separate Win32 window (in-canvas popups)
-  are not detectable via `ww_query` — use `ww_screenshot` and ask the agent to describe
+  are not detectable via `ww_inspect` — use `ww_screenshot` and ask the agent to describe
   what it sees
 - Some protected system dialogs (UAC elevation prompts) cannot be interacted with via UIA
 

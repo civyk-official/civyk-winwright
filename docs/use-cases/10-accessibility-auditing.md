@@ -19,6 +19,7 @@ navigation paths, then generates a structured report of findings.
 
 - WinWright configured as an MCP server in your AI agent —
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
+- Recommended config: `"enabledCategories": ["desktop-core"]`
 - The app to audit must be running or launchable
 
 ## Example: Audit a WPF Employee App
@@ -34,8 +35,8 @@ navigation paths, then generates a structured report of findings.
 #### Launch the app
 
 ```json
-ww_launch
-  { "exePath": "C:\\TestApp\\EmployeeApp.exe" }
+ww_app
+  { "action": "launch", "exePath": "C:\\TestApp\\EmployeeApp.exe" }
 ```
 
 Response:
@@ -47,7 +48,7 @@ Response:
 #### Capture the full element tree
 
 ```json
-ww_snapshot
+ww_inspect
   { "appId": "app-a1b2", "includeValues": true, "maxElements": 500 }
 ```
 
@@ -57,7 +58,7 @@ This returns the full tree with `name`, `controlType`, `automationId`, `isKeyboa
 #### Find all buttons and check for missing names
 
 ```json
-ww_query
+ww_inspect
   { "appId": "app-a1b2", "selector": "type=Button" }
 ```
 
@@ -83,7 +84,7 @@ The agent identifies:
 #### Find all edit controls and check for labels
 
 ```json
-ww_query
+ww_inspect
   { "appId": "app-a1b2", "selector": "type=Edit" }
 ```
 
@@ -110,14 +111,14 @@ ww_keyboard
 ```
 
 ```json
-ww_snapshot
+ww_inspect
   { "appId": "app-a1b2" }
 ```
 
 The agent inspects the returned snapshot tree to identify which element currently has
 keyboard focus.
 
-The agent presses Tab repeatedly and calls `ww_snapshot` after each press to
+The agent presses Tab repeatedly and calls `ww_inspect` after each press to
 trace the tab order. If an interactive control is skipped (focus jumps over it),
 it is flagged as keyboard-unreachable.
 

@@ -11,14 +11,15 @@ unexpected dialogs or layout changes.
 
 ## How WinWright Helps
 
-An AI agent uses `ww_query` to discover controls by name, type, or content — not
+An AI agent uses `ww_inspect` to discover controls by name, type, or content — not
 by fixed paths. It reads the live element tree, decides what to click and where to type,
-and asserts values using `ww_assert_value`. When the UI changes, the agent adapts.
+and asserts values using `ww_get_value` with assertion parameters. When the UI changes, the agent adapts.
 
 ## Prerequisites
 
 - WinWright configured as an MCP server in your AI agent —
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
+- Recommended config: `"enabledCategories": ["desktop-core"]`
 - The application under test must be a WinForms, WPF, or Win32 app with UIA-accessible controls
 
 ## Example: Test a WPF Login Flow
@@ -36,8 +37,8 @@ The agent calls these tools in order:
 #### Launch the app
 
 ```json
-ww_launch
-  { "exePath": "C:\\TestApp\\EmployeeApp.exe" }
+ww_app
+  { "action": "launch", "exePath": "C:\\TestApp\\EmployeeApp.exe" }
 ```
 
 Response:
@@ -49,7 +50,7 @@ Response:
 #### Take a snapshot to read the current UI
 
 ```json
-ww_snapshot
+ww_inspect
   { "appId": "app-1a2b" }
 ```
 
@@ -125,7 +126,7 @@ Response:
 #### Assert the welcome heading
 
 ```json
-ww_assert_value
+ww_get_value
   { "appId": "app-1a2b", "selector": "Name:Dashboard Heading",
     "op": "contains", "expected": "Welcome" }
 ```
@@ -163,12 +164,12 @@ all read and click operations.
 
 ## Tips
 
-- Use `ww_snapshot` before describing what to do — it gives the agent a full picture of
+- Use `ww_inspect` before describing what to do — it gives the agent a full picture of
   what controls are visible right now
 - If an element is inside a tab or collapsed panel, tell your agent: "expand the Settings panel
   first, then find the Theme dropdown"
 - For timing-sensitive apps, add "wait for the dashboard to load before asserting" to your prompt
-- `ww_assert_value` supports operators: `eq`, `contains`, `startsWith`, `regex`, `notEmpty`
+- `ww_get_value` (with `op` + `expected`) supports operators: `eq`, `contains`, `startsWith`, `regex`, `notEmpty`
 
 ## Limitations
 

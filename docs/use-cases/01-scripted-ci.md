@@ -22,6 +22,7 @@ standalone CI replay via `winwright run` (no AI agent required), and selector he
 
 - WinWright configured as an MCP server in your AI agent —
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
+- Recommended config: `"enabledCategories": ["desktop-core", "testing"]`
 - The application under test must be launchable from a path
 
 > **How does the agent know to use WinWright?** Once configured as an MCP server, the
@@ -42,8 +43,8 @@ Tell your agent:
 > valid credentials, (2) login with wrong password shows an error, (3) logout returns
 > to login screen. Export the script when done."
 
-The agent plans TC-001, TC-002, TC-003, calls `ww_test_case_start` for each one,
-discovers the controls through `ww_snapshot`, and records the interactions automatically.
+The agent plans TC-001, TC-002, TC-003, calls `ww_test_case` for each one,
+discovers the controls through `ww_inspect`, and records the interactions automatically.
 **No selector knowledge required — the agent figures out the UI.**
 
 ### Mode 2 — Import Your Existing Manual Test Suite
@@ -61,14 +62,14 @@ plain-text format, paste them into your prompt (or provide the file path):
 > ..."
 
 The agent parses the test cases from any format, starts recording, calls
-`ww_test_case_start` with the matching IDs and titles, navigates the app, records
+`ww_test_case` with the matching IDs and titles, navigates the app, records
 each step, and exports the script. Your manual test library becomes an automated
 script in one session.
 
 ### Mode 3 — Record an RPA Task (No Test Cases)
 
 For repetitive workflows with no pass/fail assertions, start a recording session,
-skip `ww_test_case_start`, and record a flat step sequence. Export the script when done.
+skip `ww_test_case`, and record a flat step sequence. Export the script when done.
 See [Use Case 04 — Scripted Desktop Automation](04-scripted-desktop-rpa.md) for the full walkthrough.
 
 ## Part A: Recording a Session
@@ -83,8 +84,8 @@ Tell your agent:
 The agent calls:
 
 ```json
-ww_record_start
-  { "appId": "app-1a2b" }
+ww_record
+  { "action": "start", "appId": "app-1a2b" }
 ```
 
 Response:
@@ -109,8 +110,8 @@ Tell your agent:
 > "Call this test case 'TC-001 — Login with valid credentials'."
 
 ```json
-ww_test_case_start
-  { "appId": "app-1a2b", "id": "TC-001", "title": "Login with valid credentials" }
+ww_test_case
+  { "action": "start", "appId": "app-1a2b", "id": "TC-001", "title": "Login with valid credentials" }
 ```
 
 Response:
@@ -131,8 +132,8 @@ Tell your agent:
 The agent calls (each automatically recorded as TC-001 steps):
 
 ```json
-ww_launch
-  { "exePath": "C:\\TestApp\\EmployeeApp.exe" }
+ww_app
+  { "action": "launch", "exePath": "C:\\TestApp\\EmployeeApp.exe" }
 ```
 
 ```json
@@ -159,7 +160,7 @@ Tell your agent:
 > "Assert that the status bar at the bottom says 'Ready'."
 
 ```json
-ww_assert_value
+ww_get_value
   { "appId": "app-1a2b", "selector": "Name:StatusBar",
     "property": "value", "op": "eq", "expected": "Ready",
     "message": "Status bar must show Ready after login" }
@@ -204,11 +205,11 @@ Tell your agent:
 > "Now test the failed login scenario. Call it 'TC-002 — Login with wrong password'."
 
 ```json
-ww_test_case_start
-  { "appId": "app-1a2b", "id": "TC-002", "title": "Login with wrong password" }
+ww_test_case
+  { "action": "start", "appId": "app-1a2b", "id": "TC-002", "title": "Login with wrong password" }
 ```
 
-`ww_test_case_start` automatically closes TC-001 when it opens TC-002.
+`ww_test_case` with `action: "start"` automatically closes TC-001 when it opens TC-002.
 All subsequent steps belong to TC-002.
 
 ### Step 7 — End the Last Test Case and Export
@@ -218,8 +219,8 @@ Tell your agent:
 > "End the test case and export the full script. The app path is C:\TestApp\EmployeeApp.exe."
 
 ```json
-ww_test_case_end
-  { "appId": "app-1a2b" }
+ww_test_case
+  { "action": "end", "appId": "app-1a2b" }
 ```
 
 Response:
@@ -255,8 +256,8 @@ use whichever fits the situation.
 > "I accidentally clicked the wrong button. Remove the last step."
 
 ```json
-ww_record_pop
-  { "appId": "app-1a2b", "count": 1 }
+ww_record
+  { "action": "pop", "appId": "app-1a2b", "count": 1 }
 ```
 
 Response:
@@ -270,8 +271,8 @@ Response:
 > "Those last three steps were wrong — I took a wrong turn."
 
 ```json
-ww_record_pop
-  { "appId": "app-1a2b", "count": 3 }
+ww_record
+  { "action": "pop", "appId": "app-1a2b", "count": 3 }
 ```
 
 Response:
@@ -287,11 +288,11 @@ Continue from the known-good point.
 > "The whole thing is wrong. Start fresh."
 
 ```json
-ww_record_start
-  { "appId": "app-1a2b" }
+ww_record
+  { "action": "start", "appId": "app-1a2b" }
 ```
 
-`ww_record_start` clears the buffer and all test case state. The session stays open —
+`ww_record` with `action: "start"` clears the buffer and all test case state. The session stays open —
 you do not need to relaunch the app.
 
 ### Correction 4 — Fix a Wrong Test Case Boundary
@@ -299,19 +300,19 @@ you do not need to relaunch the app.
 > "I forgot to close TC-001 before starting the next scenario."
 
 ```json
-ww_test_case_end
-  { "appId": "app-1a2b" }
+ww_test_case
+  { "action": "end", "appId": "app-1a2b" }
 ```
 
 Then open the next case:
 
 ```json
-ww_test_case_start
-  { "appId": "app-1a2b", "id": "TC-002", "title": "Failed login" }
+ww_test_case
+  { "action": "start", "appId": "app-1a2b", "id": "TC-002", "title": "Failed login" }
 ```
 
-Note: calling `ww_test_case_start` with a new ID **automatically** closes the previous
-test case — so `ww_test_case_end` is only needed when you want explicit control over timing.
+Note: calling `ww_test_case` with `action: "start"` and a new ID **automatically** closes the previous
+test case — so `action: "end"` is only needed when you want explicit control over timing.
 
 ### Correction 5 — Prevent Recording an Exploratory Click
 
@@ -335,8 +336,8 @@ ww_click
 Pop the last step (which had the assertion embedded):
 
 ```json
-ww_record_pop
-  { "appId": "app-1a2b", "count": 1 }
+ww_record
+  { "action": "pop", "appId": "app-1a2b", "count": 1 }
 ```
 
 Redo the action that should trigger the assertion (so it gets recorded again):
@@ -349,7 +350,7 @@ ww_click
 Now embed the corrected assertion:
 
 ```json
-ww_assert_value
+ww_get_value
   { "appId": "app-1a2b", "selector": "Name:StatusBar",
     "property": "value", "op": "eq", "expected": "Logged in" }
 ```
@@ -433,7 +434,7 @@ before recording the rest.
 
 ### RPA Mode (no test cases — flat step list)
 
-When no `ww_test_case_start` was called, the script exports with a flat `steps[]`:
+When no `ww_test_case` was called, the script exports with a flat `steps[]`:
 
 ```json
 {
@@ -496,7 +497,7 @@ The runner executes steps directly using the WinWright automation engine.
   [pass] #3 ww_click  [Name:Sign In]
 [FAIL] TC-002: Login with wrong password  (1100 ms)
   [pass] #1 ww_type  [AutomationId:txtUsername]
-  [FAIL] #2 ww_assert_value  [#lblError]  -- Expected contains 'Username or password incorrect', actual ''
+  [FAIL] #2 ww_get_value  [#lblError]  -- Expected contains 'Username or password incorrect', actual ''
 
 Result: FAILED  (1 passed, 1 failed, 0 errors, 2 total)
 ```
@@ -512,7 +513,7 @@ Result: FAILED  (1 passed, 1 failed, 0 errors, 2 total)
   </testsuite>
   <testsuite name="TC-002: Login with wrong password" tests="2" failures="1" errors="0" skipped="0" time="1.100">
     <testcase name="#1 ww_type" classname="AutomationId:txtUsername" time="0.400" />
-    <testcase name="#2 ww_assert_value" classname="#lblError" time="0.700">
+    <testcase name="#2 ww_get_value" classname="#lblError" time="0.700">
       <failure message="Expected contains 'Username or password incorrect', actual ''">
         actual:
         expected: Username or password incorrect
@@ -621,7 +622,7 @@ can repair a specific script interactively without a full command-line pass.
 
 - Record with a real, representative run — the agent should complete the full user flow,
   not just click through the fastest path
-- Use `ww_test_case_start` for every distinct user scenario — reports are at the test case level
+- Use `ww_test_case` for every distinct user scenario — reports are at the test case level
 - Use `ww_export_script stopRecording=false` mid-session to inspect the script before committing
 - Use `AutomationId` selectors wherever possible — they survive label renames and layout changes
 - Keep test cases focused: one scenario per test case makes failures easier to diagnose
@@ -634,7 +635,7 @@ can repair a specific script interactively without a full command-line pass.
   handlers are updated to pass element properties to `Record()`
 - `winwright heal` launches the app from the script's `launchPath` to probe selectors —
   the target app must be launchable during the heal pass
-- `ww_assert_value` is the only supported assertion type; complex multi-element or
+- `ww_get_value` is the only supported assertion type; complex multi-element or
   cross-window assertions require custom logic in the MCP session
 
 ---

@@ -20,6 +20,7 @@ with the actual values for every discrepancy.
 
 - WinWright configured as an MCP server in your AI agent —
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
+- Recommended config: `"enabledCategories": ["desktop-core", "testing"]`
 - The target app must be running or launchable
 - Your reference data: a CSV, spreadsheet, or list of key-value pairs
 
@@ -43,8 +44,8 @@ The agent parses the CSV and enters a loop — for each product code:
 #### Attach to the running app (once)
 
 ```json
-ww_attach
-  { "processId": 21440 }
+ww_app
+  { "action": "attach", "processId": 21440 }
 ```
 
 Response:
@@ -64,15 +65,15 @@ ww_type
 #### Wait for the result to load
 
 ```json
-ww_wait_for_value
+ww_wait_for
   { "appId": "app-7g8h", "selector": "AutomationId:lblPrice",
-    "op": "notEmpty", "timeoutMs": 3000 }
+    "property": "value", "op": "notEmpty", "timeoutMs": 3000 }
 ```
 
 #### Assert the displayed price matches the expected value
 
 ```json
-ww_assert_value
+ww_get_value
   { "appId": "app-7g8h", "selector": "AutomationId:lblPrice",
     "property": "value", "op": "eq", "expected": "29.99",
     "message": "PROD-001 price mismatch" }
@@ -129,8 +130,8 @@ You can record the bulk validation as a test script with one test case per produ
 > "Start a recording session, then validate these products and record each one as a
 > separate test case: TC-PROD-001, TC-PROD-002, ..."
 
-The agent calls `ww_test_case_start` for each product, records the search and assert steps,
-then calls `ww_test_case_end`. The exported script can be replayed in CI to verify prices
+The agent calls `ww_test_case` with `action: "start"` for each product, records the search and assert steps,
+then calls `ww_test_case` with `action: "end"`. The exported script can be replayed in CI to verify prices
 after every release (see [Use Case 01 — Scripted UI Test Automation for CI](01-scripted-ci.md)).
 
 ## Tips

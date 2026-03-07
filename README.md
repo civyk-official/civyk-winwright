@@ -3,11 +3,12 @@
 [![GitHub Release](https://img.shields.io/github/v/release/civyk-official/civyk-winwright?label=Release)](https://github.com/civyk-official/civyk-winwright/releases)
 [![License](https://img.shields.io/badge/License-Freeware-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4)](https://github.com/civyk-official/civyk-winwright)
-[![MCP](https://img.shields.io/badge/MCP-110%20tools-0D9488)](https://modelcontextprotocol.io/)
+[![MCP](https://img.shields.io/badge/MCP-~94%20tools-0D9488)](https://modelcontextprotocol.io/)
 
 Windows automation server for the [Model Context Protocol](https://modelcontextprotocol.io/).
-110 tools for desktop (WPF, WinForms, Win32), browser (Chrome/Edge via CDP),
+~94 tools for desktop (WPF, WinForms, Win32), browser (Chrome/Edge via CDP),
 and system management — all accessible to AI agents over MCP.
+Smart tool filtering exposes only 10–30 tools per session for optimal AI agent performance.
 
 ## Describe tests in plain English — the AI agent does the rest
 
@@ -40,6 +41,7 @@ Why this matters:
 - [MCP Client Configuration](#mcp-client-configuration)
 - [Use Cases](#use-cases)
 - [Tools](#tools)
+- [Tool Filtering](#tool-filtering)
 - [Configuration](#configuration)
 - [Who Is This For](#who-is-this-for)
 - [How It Compares](#how-it-compares)
@@ -55,7 +57,7 @@ Install, configure your MCP client, then ask the agent to do something:
 The agent calls WinWright tools and returns results:
 
 ```text
-ww_launch    → { "processId": 12840, "mainWindowTitle": "Untitled - Notepad" }
+ww_app       → { "appId": "app-1a2b", "processId": 12840, "mainWindowTitle": "Untitled - Notepad" }
 ww_type      → { "success": true }
 ww_get_value → { "value": "Hello from WinWright" }
 ```
@@ -196,15 +198,55 @@ after every click. Handle or dismiss them without breaking the automation flow.
 
 ## Tools
 
-110 tools across five categories:
+~94 tools across five categories:
 
-| Category | Count | What it does |
-|----------|-------|-------------|
-| **Desktop Automation** | 63 | Launch apps, click, type, read values, screenshots, tree navigation, dialogs, test case recording, CI script export (UIA3) |
-| **System** | 22 | Processes, registry, environment variables, file system, network, services, scheduled tasks |
-| **Browser** | 15 | Chrome/Edge via CDP — navigate, find elements, click, type, evaluate JS. No Selenium dependency |
-| **AI Agent** | 10 | Snapshots, state diffing, event watching, action recording, `ww_get_schema` for tool discovery |
-| **Security** | — | Runtime permission guards with AD group overrides, JSONL audit logging |
+| Category | Key Tools | Count | What it does |
+|----------|-----------|-------|-------------|
+| **Desktop Core** | `ww_app`, `ww_click`, `ww_type`, `ww_type_human`, `ww_inspect`, `ww_get_value`, `ww_screenshot` | ~27 | Launch/attach to apps, click, type, read values, screenshots, tree navigation, dialogs (UIA3) |
+| **Recording & Testing** | `ww_record`, `ww_test_case`, `ww_export_script`, `ww_heal_script` | ~13 | Record sessions, define test cases, export CI scripts, self-heal broken selectors |
+| **Browser** | `ww_browser_session`, `ww_browser_navigate`, `ww_browser_find`, `ww_browser_click`, `ww_browser_type` | ~14 | Chrome/Edge via CDP — navigate, find elements, click, type, evaluate JS. No Selenium dependency |
+| **System** | `ww_process`, `ww_service_control`, `ww_registry`, `ww_shell`, `ww_file_read` | ~18 | Processes, registry, environment variables, file system, network, services, scheduled tasks |
+| **AI Agent** | `ww_get_schema`, `ww_activate_tools`, `ww_snapshot_state`, `ww_diff_state` | ~10 | Tool discovery, dynamic activation, state diffing, event watching |
+| **Security** | — | — | Runtime permission guards with AD group overrides, JSONL audit logging |
+
+See [docs/tool-inventory.csv](docs/tool-inventory.csv) for the complete tool list with categories, tiers, and permission guards.
+
+## Tool Filtering
+
+AI agents perform best with fewer than 30 tools. WinWright uses three layers to keep
+per-session tool counts in the optimal range:
+
+1. **Category filtering** — enable only the categories you need
+2. **Tiered bootstrap** — start with ~12 core tools; activate more on demand
+3. **Dynamic activation** — the agent calls `ww_activate_tools` to load additional tools mid-session
+
+### Recommended Profiles
+
+| Role | Categories | Tools on Connect | Config |
+|------|-----------|-----------------|--------|
+| **QA engineer** | `desktop-core`, `testing` | ~12 | `"enabledCategories": ["desktop-core", "testing"]` |
+| **Ad-hoc automation** | `desktop-core` | ~8 | `"enabledCategories": ["desktop-core"]` |
+| **Sysadmin** | `system` | ~5 | `"enabledCategories": ["system"]` |
+| **Cross-app workflow** | `desktop-core`, `browser` | ~12 | `"enabledCategories": ["desktop-core", "browser"]` |
+| **Power user** | All | ~15 | Omit `enabledCategories` (default: all) |
+
+The `agent` category (including `ww_get_schema` and `ww_activate_tools`) is always loaded
+implicitly — no need to include it in your config.
+
+### How It Works
+
+On MCP connection, WinWright exposes only **Tier 1 (Core)** tools from your enabled categories.
+The agent discovers the full catalog via `ww_get_schema` and activates additional tools as needed:
+
+```text
+Connect → 12 core tools available
+Agent calls ww_get_schema → sees full catalog by category and tier
+Agent calls ww_activate_tools { "category": "browser" } → browser tools added
+Server sends tools/list_changed → client refreshes tool list
+```
+
+For MCP clients that don't support `tools/list_changed`, set `"toolExposure": "static"` to
+load all enabled-category tools at connect time (no tiering).
 
 ## Configuration
 
@@ -212,6 +254,8 @@ Create `winwright.json` next to the binary (or `%APPDATA%\WinWright\winwright.js
 
 ```json
 {
+  "enabledCategories": ["desktop-core", "testing"],
+  "toolExposure": "dynamic",
   "permissions": {
     "allowShell": false,
     "allowRegistryWrite": false,
@@ -229,13 +273,20 @@ Create `winwright.json` next to the binary (or `%APPDATA%\WinWright\winwright.js
 }
 ```
 
+| Field | Default | Description |
+|-------|---------|-------------|
+| `enabledCategories` | All | Array of category names: `desktop-core`, `testing`, `browser`, `system`, `agent` |
+| `toolExposure` | `"dynamic"` | `"dynamic"` = tiered bootstrap (recommended). `"static"` = all enabled tools on connect |
+| `permissions.*` | All `false` | Enable dangerous operations individually |
+| `audit.enabled` | `true` | JSONL audit logging |
+
 All dangerous operations are disabled by default. Enable only what you need.
 
 ## CLI
 
 ```text
-winwright mcp                                    Start MCP server (stdio)
-winwright serve --port N                         Start MCP server (HTTP, default 8765)
+winwright mcp [--categories cat1,cat2,...]       Start MCP server (stdio)
+winwright serve --port N [--categories ...]      Start MCP server (HTTP, default 8765)
 winwright run <script.json> [--format text|junit] [--output <file>]
                                                  Replay a recorded automation script
 winwright heal <script.json> [--app <path>|--pid <n>] [--output <file>] [--min-confidence <0-1>]

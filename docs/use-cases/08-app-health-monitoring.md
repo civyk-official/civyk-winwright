@@ -19,6 +19,7 @@ service — all without modifying the application or adding instrumentation.
 
 - WinWright configured as an MCP server —
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
+- Recommended config: `"enabledCategories": ["desktop-core", "system"]`
 - For scheduled/automated checks, use HTTP mode: `winwright serve --port 8765`
 - The app must expose status information via UIA-accessible controls
 
@@ -35,8 +36,8 @@ service — all without modifying the application or adding instrumentation.
 #### Check if the process is running
 
 ```json
-ww_process_list
-  { "nameFilter": "OrderManager" }
+ww_process
+  { "action": "list", "nameFilter": "OrderManager" }
 ```
 
 Response — app is running:
@@ -60,8 +61,8 @@ If not found, the agent reports the outage immediately.
 #### Attach to the running app
 
 ```json
-ww_attach
-  { "processId": 9820 }
+ww_app
+  { "action": "attach", "processId": 9820 }
 ```
 
 Response:
@@ -86,7 +87,7 @@ Response:
 #### Assert the status is Connected
 
 ```json
-ww_assert_value
+ww_get_value
   { "appId": "app-mon1", "selector": "AutomationId:lblConnectionStatus",
     "property": "value", "op": "eq", "expected": "Connected",
     "message": "OrderManager must show Connected status" }

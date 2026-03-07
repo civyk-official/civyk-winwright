@@ -19,13 +19,14 @@ a form, and returns to the desktop — all in one conversation.
 
 - WinWright configured as an MCP server in your AI agent —
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
+- Recommended config: `"enabledCategories": ["desktop-core", "browser"]`
 - For the browser phase: Chrome or Edge launched with remote debugging enabled.
 
   ```bat
   chrome.exe --remote-debugging-port=9222 --user-data-dir=C:\Temp\cdp-profile
   ```
 
-- The desktop app must be running (use `ww_attach`) or launchable (use `ww_launch`)
+- The desktop app must be running (use `ww_app` with `action: "attach"`) or launchable (use `ww_app` with `action: "launch"`)
 
 ## Example: Get an Order from ERP and Download Its Invoice from the Supplier Portal
 
@@ -41,8 +42,8 @@ a form, and returns to the desktop — all in one conversation.
 **Attach to the running ERP:**
 
 ```json
-ww_attach
-  { "processId": 7640 }
+ww_app
+  { "action": "attach", "processId": 7640 }
 ```
 
 Response:
@@ -86,8 +87,8 @@ The agent now has the supplier invoice reference it needs for the portal.
 **Connect to Chrome (already running with debugging port):**
 
 ```json
-ww_browser_connect
-  { "debugPort": 9222 }
+ww_browser_session
+  { "action": "connect", "debugPort": 9222 }
 ```
 
 Response:

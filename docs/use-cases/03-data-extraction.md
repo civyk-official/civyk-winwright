@@ -19,7 +19,8 @@ and structures the output. No API needed — just the running application.
 
 - WinWright configured as an MCP server in your AI agent —
   see [MCP Client Configuration](../../README.md#mcp-client-configuration) for stdio and HTTP setup
-- The target app must be running (use `ww_attach` to connect without launching)
+- Recommended config: `"enabledCategories": ["desktop-core"]`
+- The target app must be running (use `ww_app` with `action: "attach"` to connect without launching)
 - The data grid or table must be UIA-accessible (most WinForms DataGridView, ListView,
   and WPF DataGrid controls are)
 
@@ -36,8 +37,8 @@ and structures the output. No API needed — just the running application.
 #### Attach to the running app
 
 ```json
-ww_attach
-  { "processId": 14320 }
+ww_app
+  { "action": "attach", "processId": 14320 }
 ```
 
 Response:
@@ -49,7 +50,7 @@ Response:
 #### Find the data grid
 
 ```json
-ww_query
+ww_inspect
   { "appId": "app-5e6f", "selector": "type=DataGrid" }
 ```
 
@@ -150,7 +151,7 @@ Response:
 ```
 
 Tell your agent: "Read all the fields in the Invoice Details panel and return them as a table."
-The agent calls `ww_query` to discover all controls, then `ww_get_value` on each.
+The agent calls `ww_inspect` to discover all controls, then `ww_get_value` on each.
 
 ## Tips
 

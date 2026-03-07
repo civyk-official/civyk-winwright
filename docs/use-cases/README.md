@@ -52,10 +52,12 @@ by name in your prompts.
 
 ## Configuration
 
-Create `winwright.json` next to the binary to enable non-default capabilities:
+Create `winwright.json` next to the binary to configure tool filtering and permissions:
 
 ```json
 {
+  "enabledCategories": ["desktop-core", "testing"],
+  "toolExposure": "dynamic",
   "permissions": {
     "allowShell": false,
     "allowRegistryWrite": false,
@@ -66,7 +68,9 @@ Create `winwright.json` next to the binary to enable non-default capabilities:
 }
 ```
 
-All sensitive operations are disabled by default. Enable only what each use case requires.
+- `enabledCategories` — load only the tool categories you need (see [Tool Filtering](../../README.md#tool-filtering))
+- `toolExposure` — `"dynamic"` (default) starts with core tools and activates more on demand; `"static"` loads all enabled tools at connect
+- All sensitive operations are disabled by default. Enable only what each use case requires.
 
 ---
 
