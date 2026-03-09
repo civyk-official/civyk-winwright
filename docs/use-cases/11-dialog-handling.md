@@ -38,8 +38,8 @@ ww_query
 ```
 
 ```json
-ww_double_click
-  { "appId": "app-1a2b", "selector": "Name:Acme Corp" }
+ww_click
+  { "appId": "app-1a2b", "selector": "Name:Acme Corp", "clickCount": 2 }
 ```
 
 #### Edit the contact name
@@ -185,8 +185,8 @@ Supported buttons: `OK`, `Cancel`, `Yes`, `No`, `Abort`, `Retry`, `Ignore`.
 When you know a dialog is coming (e.g., after clicking Delete):
 
 ```json
-ww_wait_for_dialog
-  { "appId": "app-1a2b", "timeoutMs": 5000 }
+ww_wait
+  { "mode": "dialog", "appId": "app-1a2b", "timeoutMs": 5000 }
 ```
 
 Response:

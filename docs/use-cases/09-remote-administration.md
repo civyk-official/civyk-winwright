@@ -110,8 +110,8 @@ directly; use a local proxy or the Claude Code CLI.
 #### List services matching the name
 
 ```json
-ww_service_list
-  { "filter": "MyDataService" }
+ww_service
+  { "action": "list", "filter": "MyDataService" }
 ```
 
 Response:
@@ -128,8 +128,8 @@ Response:
 #### Start the service
 
 ```json
-ww_service_start
-  { "name": "MyDataService" }
+ww_service
+  { "action": "start", "name": "MyDataService" }
 ```
 
 Response:
@@ -141,8 +141,8 @@ Response:
 #### Confirm it's running
 
 ```json
-ww_service_list
-  { "filter": "MyDataService" }
+ww_service
+  { "action": "list", "filter": "MyDataService" }
 ```
 
 Response:
@@ -178,7 +178,7 @@ Response:
 Every call is recorded in `audit-2026-02-28.jsonl`:
 
 ```json
-{ "ts": "2026-02-28T14:32:01Z", "tool": "ww_service_start",
+{ "ts": "2026-02-28T14:32:01Z", "tool": "ww_service",
   "status": "ok", "caller": "DOMAIN\\alice", "identity": "svc-winwright",
   "durationMs": 3240 }
 { "ts": "2026-02-28T14:32:05Z", "tool": "ww_shell",
@@ -191,8 +191,8 @@ Every call is recorded in `audit-2026-02-28.jsonl`:
 ## Example: Check Registry Configuration
 
 ```json
-ww_registry_read
-  { "key": "HKLM\\SOFTWARE\\MyApp", "value": "DatabaseServer" }
+ww_registry
+  { "action": "read", "key": "HKLM\\SOFTWARE\\MyApp", "value": "DatabaseServer" }
 ```
 
 Response:
@@ -222,7 +222,7 @@ Set `WINWRIGHT_TLS_PASSWORD` as an environment variable — never put secrets in
 
 ## Limitations
 
-- `ww_shell`, `ww_process_kill`, `ww_service_*` are disabled by default — enable only what
+- `ww_shell`, `ww_process(action="kill")`, `ww_service` are disabled by default — enable only what
   you need by setting the relevant `permissions` flags
 - Kerberos requires both machines to be domain-joined; NTLM works in workgroups but
   provides weaker authentication guarantees

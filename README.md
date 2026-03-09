@@ -3,10 +3,10 @@
 [![GitHub Release](https://img.shields.io/github/v/release/civyk-official/civyk-winwright?label=Release)](https://github.com/civyk-official/civyk-winwright/releases)
 [![License](https://img.shields.io/badge/License-Freeware-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4)](https://github.com/civyk-official/civyk-winwright)
-[![MCP](https://img.shields.io/badge/MCP-110%20tools-0D9488)](https://modelcontextprotocol.io/)
+[![MCP](https://img.shields.io/badge/MCP-~59%20tools-0D9488)](https://modelcontextprotocol.io/)
 
 Windows automation server for the [Model Context Protocol](https://modelcontextprotocol.io/).
-110 tools for desktop (WPF, WinForms, Win32), browser (Chrome/Edge via CDP),
+~59 consolidated tools for desktop (WPF, WinForms, Win32), browser (Chrome/Edge via CDP),
 and system management — all accessible to AI agents over MCP.
 
 ## Describe tests in plain English — the AI agent does the rest
@@ -196,15 +196,17 @@ after every click. Handle or dismiss them without breaking the automation flow.
 
 ## Tools
 
-110 tools across five categories:
+~59 consolidated tools across five categories (merged from 110 via action/mode parameters):
 
-| Category | Count | What it does |
+| Category | Tools | What it does |
 |----------|-------|-------------|
-| **Desktop Automation** | 63 | Launch apps, click, type, read values, screenshots, tree navigation, dialogs, test case recording, CI script export (UIA3) |
-| **System** | 22 | Processes, registry, environment variables, file system, network, services, scheduled tasks |
-| **Browser** | 15 | Chrome/Edge via CDP — navigate, find elements, click, type, evaluate JS. No Selenium dependency |
-| **AI Agent** | 10 | Snapshots, state diffing, event watching, action recording, `ww_get_schema` for tool discovery |
+| **Desktop Automation** | ~30 | Launch apps, click, type, read values, screenshots, tree navigation, dialogs, test case recording, CI script export (UIA3) |
+| **System** | ~12 | Processes, registry, environment variables, file system, network, services, scheduled tasks |
+| **Browser** | 4 | Chrome/Edge via CDP — sessions, pages, elements, advanced (eval/forms/dialogs). No Selenium dependency |
+| **AI Agent** | ~10 | Snapshots, state diffing, event watching, action recording, `ww_get_schema` for tool discovery |
 | **Security** | — | Runtime permission guards with AD group overrides, JSONL audit logging |
+
+Each tool supports multiple actions via an `action` parameter (e.g., `ww_service(action="list")`, `ww_service(action="start")`), reducing the total tool count while maintaining full functionality.
 
 ## Configuration
 
@@ -220,7 +222,8 @@ Create `winwright.json` next to the binary (or `%APPDATA%\WinWright\winwright.js
     "allowServiceControl": false,
     "allowTaskScheduler": false,
     "allowEnvironmentWrite": false,
-    "allowBrowserEval": false
+    "allowBrowserEval": false,
+    "allowNetworkProbe": true
   },
   "audit": {
     "enabled": true,

@@ -112,8 +112,8 @@ Response:
 #### Wait for the dashboard to load
 
 ```json
-ww_wait_for
-  { "appId": "app-1a2b", "selector": "Name:Dashboard Heading", "timeoutMs": 5000 }
+ww_wait
+  { "mode": "element_state", "appId": "app-1a2b", "selector": "Name:Dashboard Heading", "timeoutMs": 5000 }
 ```
 
 Response:

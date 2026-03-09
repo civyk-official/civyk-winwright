@@ -58,8 +58,8 @@ ImportTool, load the CSV, and click Process.
 #### Start recording (RPA mode — no test cases)
 
 ```json
-ww_record_start
-  { "appId": "app-rpa1" }
+ww_record
+  { "action": "start", "appId": "app-rpa1" }
 ```
 
 Response:
@@ -68,7 +68,7 @@ Response:
 { "started": true }
 ```
 
-No `ww_test_case_start` is called. All steps go into a flat list — this is RPA mode.
+No `ww_record(action="test_case_start")` is called. All steps go into a flat list — this is RPA mode.
 
 #### Launch and operate the reporting app
 
@@ -147,8 +147,8 @@ ww_click
 If a wrong step was recorded:
 
 ```json
-ww_record_pop
-  { "appId": "app-rpa1", "count": 1 }
+ww_record
+  { "action": "pop", "appId": "app-rpa1", "count": 1 }
 ```
 
 See [Use Case 01 — Part B: Correcting a Recording](01-scripted-ci.md#part-b-correcting-a-recording)
@@ -157,8 +157,8 @@ for the full set of correction patterns (they apply equally to RPA mode).
 ### 4. Export the RPA Script
 
 ```json
-ww_export_script
-  { "appId": "app-rpa1",
+ww_record
+  { "action": "export", "appId": "app-rpa1",
     "launchPath": "C:\\Tools\\ReportingApp.exe",
     "stopRecording": true }
 ```

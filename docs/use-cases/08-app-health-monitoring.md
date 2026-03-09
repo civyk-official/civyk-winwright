@@ -35,8 +35,8 @@ service — all without modifying the application or adding instrumentation.
 #### Check if the process is running
 
 ```json
-ww_process_list
-  { "nameFilter": "OrderManager" }
+ww_process
+  { "action": "list", "nameFilter": "OrderManager" }
 ```
 
 Response — app is running:
@@ -117,8 +117,8 @@ more than 5 minutes ago, it flags the issue.
 #### Verify the Windows service
 
 ```json
-ww_service_list
-  { "filter": "OrderManagerSvc" }
+ww_service
+  { "action": "list", "filter": "OrderManagerSvc" }
 ```
 
 Response:
