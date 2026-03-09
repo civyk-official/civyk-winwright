@@ -86,8 +86,8 @@ The agent now has the supplier invoice reference it needs for the portal.
 **Connect to Chrome (already running with debugging port):**
 
 ```json
-ww_browser_connect
-  { "debugPort": 9222 }
+ww_browser_session
+  { "action": "connect", "debugPort": 9222 }
 ```
 
 Response:
@@ -99,8 +99,8 @@ Response:
 **Navigate to the supplier portal:**
 
 ```json
-ww_browser_navigate
-  { "url": "https://portal.example.com/invoices" }
+ww_browser_page
+  { "action": "navigate", "url": "https://portal.example.com/invoices" }
 ```
 
 Response:
@@ -112,27 +112,27 @@ Response:
 **Find and fill the invoice search field:**
 
 ```json
-ww_browser_find
-  { "selector": "#invoiceSearch" }
+ww_browser_element
+  { "action": "find", "selector": "#invoiceSearch" }
 ```
 
 ```json
-ww_browser_type
-  { "selector": "#invoiceSearch", "text": "SUP-INV-9934-2026", "clearFirst": true }
+ww_browser_element
+  { "action": "type", "selector": "#invoiceSearch", "text": "SUP-INV-9934-2026", "clearFirst": true }
 ```
 
 **Click Search:**
 
 ```json
-ww_browser_click
-  { "selector": "button[type='submit']" }
+ww_browser_element
+  { "action": "click", "selector": "button[type='submit']" }
 ```
 
 **Find the download link:**
 
 ```json
-ww_browser_find
-  { "selector": "a[href$='.pdf']" }
+ww_browser_element
+  { "action": "find", "selector": "a[href$='.pdf']" }
 ```
 
 Response:
@@ -144,15 +144,15 @@ Response:
 **Click Download:**
 
 ```json
-ww_browser_click
-  { "selector": "a[href$='.pdf']" }
+ww_browser_element
+  { "action": "click", "selector": "a[href$='.pdf']" }
 ```
 
 **Screenshot the confirmation:**
 
 ```json
-ww_browser_screenshot
-  { }
+ww_browser_page
+  { "action": "screenshot" }
 ```
 
 ### 3. Result

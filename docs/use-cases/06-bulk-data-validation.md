@@ -64,8 +64,8 @@ ww_type
 #### Wait for the result to load
 
 ```json
-ww_wait_for_value
-  { "appId": "app-7g8h", "selector": "AutomationId:lblPrice",
+ww_wait
+  { "mode": "value", "appId": "app-7g8h", "selector": "AutomationId:lblPrice",
     "op": "notEmpty", "timeoutMs": 3000 }
 ```
 
@@ -129,14 +129,14 @@ You can record the bulk validation as a test script with one test case per produ
 > "Start a recording session, then validate these products and record each one as a
 > separate test case: TC-PROD-001, TC-PROD-002, ..."
 
-The agent calls `ww_test_case_start` for each product, records the search and assert steps,
-then calls `ww_test_case_end`. The exported script can be replayed in CI to verify prices
+The agent calls `ww_record(action="test_case_start")` for each product, records the search and assert steps,
+then calls `ww_record(action="test_case_end")`. The exported script can be replayed in CI to verify prices
 after every release (see [Use Case 01 — Scripted UI Test Automation for CI](01-scripted-ci.md)).
 
 ## Tips
 
 - Provide the reference data directly in your prompt (paste the CSV) or as a file path
-  if `allowFileWrite` is enabled and the agent can read it via `ww_file_read`
+  if `allowFileWrite` is enabled and the agent can read it via `ww_file(action="read")`
 - Use `op: "contains"` instead of `op: "eq"` when displayed values include currency symbols
   or formatting (`$29.99` vs `29.99`)
 - Ask the agent to stop immediately on the first discrepancy or continue through all records —
