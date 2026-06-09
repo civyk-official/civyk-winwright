@@ -119,8 +119,8 @@ For 500+ records, the same pattern works but takes longer:
 - For apps with a search-and-page pattern (results appear on a new screen each time),
   include navigation instructions: "After reading the price, press Escape to go back
   to the search form before entering the next code"
-- If the app has a grid view that shows multiple products at once, use `ww_get_table_data`
-  instead of searching one by one (see [Use Case 03 — Data Extraction](03-data-extraction.md))
+- If the app has a grid view that shows multiple products at once, use `ww_grid` with
+  `action="get_table"` instead of searching one by one (see [Use Case 03 — Data Extraction](03-data-extraction.md))
 
 ## Recording the Validation as a Test Script
 

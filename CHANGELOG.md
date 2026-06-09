@@ -5,6 +5,48 @@ All notable changes to WinWright will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-06-09
+
+Adds a first-class **CLI mode** for environments where MCP is blocked, an **installable
+(offline) Claude Code skill**, and a further round of tool consolidation (~59 → ~52). The MCP
+stdio and HTTP modes are unchanged. Recorded scripts from 2.x replay unchanged — **no migration
+required**.
+
+### Added
+
+- **CLI mode** — drive the full tool surface without an MCP client:
+  - `winwright tools [--json | <name>]` — discover the tool surface (replaces MCP's automatic
+    schema advertisement).
+  - `winwright call <tool> --param value …` — invoke one tool; JSON result to stdout, diagnostics
+    to stderr, non-zero exit on an error envelope. Supports scalars, boolean flags, arrays, and
+    inline-JSON objects; `--port N` / `--port=N`, `--no-autospawn`.
+  - `winwright daemon start | stop | status` — a loopback daemon owns the live sessions, so the
+    `appId` from `ww_launch` persists across separate `call` commands (full parity with MCP). It
+    auto-starts on first `call`, binds to `127.0.0.1` only, and self-exits when idle.
+- **Installable agent skill** — `winwright skills install --scope user|project [--dir <path>] [--force]`
+  (also `uninstall`, `--list`). The skill is embedded in the binary and installs with **no network
+  access**, so an agent can learn the CLI offline.
+
+### Breaking Changes
+
+- **Agent-facing tool renames.** Sixteen tools were merged into five `action`-parameterised tools.
+  MCP/CLI callers must use the new names (run `winwright tools` to discover them). Recorded scripts
+  replay unchanged.
+- In `ww_dialog`, inner action parameters are `dialogAction`, `fileAction`, and `expectAction`
+  (to avoid colliding with the top-level `action`).
+
+### Migration Guide
+
+Update agent/MCP/CLI calls to the consolidated tool names (recorded scripts need no changes):
+
+| Old Tool Name(s) | New Tool | Action |
+|---|---|---|
+| `ww_get_snapshot` / `ww_get_state_hash` / `ww_diff_state` / `ww_assert_snapshot` | `ww_snapshot` | `get` / `hash` / `diff` / `assert` |
+| `ww_get_table_data` / `ww_get_cell` / `ww_set_cell` | `ww_grid` | `get_table` / `get_cell` / `set_cell` |
+| `ww_inspect` / `ww_get_attribute` / `ww_find_by_description` / `ww_label_map` | `ww_inspect` | `element` / `attribute` / `find_by_description` / `label_map` |
+| `ww_handle_dialog` / `ww_handle_file_dialog` / `ww_expect_dialog` | `ww_dialog` | `handle` / `handle_file` / `expect` |
+| `ww_window_resize` / `ww_window_state` / `ww_activate_window` | `ww_window` | `resize` / `state` / `activate` |
+
 ## [2.0.0] - 2026-03-09
 
 ### Breaking Changes

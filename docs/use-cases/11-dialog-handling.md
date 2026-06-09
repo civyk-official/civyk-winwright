@@ -212,8 +212,8 @@ The agent will apply this policy throughout the session without being reminded f
 - Scope dialog searches with `windowId` to avoid confusing the main window with the dialog
 - For apps that show many dialogs, list the expected ones in your prompt: "There may be
   a 'License agreement' dialog on first run — accept it and continue"
-- `ww_expect_dialog` can be used to assert that a specific dialog appeared (useful in test
-  recordings as a verification step)
+- `ww_dialog` with `action="expect"` can be used to assert that a specific dialog appeared
+  (useful in test recordings as a verification step)
 
 ## Limitations
 

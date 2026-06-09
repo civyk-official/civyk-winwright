@@ -3,11 +3,12 @@
 [![GitHub Release](https://img.shields.io/github/v/release/civyk-official/civyk-winwright?label=Release)](https://github.com/civyk-official/civyk-winwright/releases)
 [![License](https://img.shields.io/badge/License-Freeware-blue)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4)](https://github.com/civyk-official/civyk-winwright)
-[![MCP](https://img.shields.io/badge/MCP-~59%20tools-0D9488)](https://modelcontextprotocol.io/)
+[![MCP](https://img.shields.io/badge/MCP-~52%20tools-0D9488)](https://modelcontextprotocol.io/)
 
 Windows automation server for the [Model Context Protocol](https://modelcontextprotocol.io/).
-~59 consolidated tools for desktop (WPF, WinForms, Win32), browser (Chrome/Edge via CDP),
-and system management — all accessible to AI agents over MCP.
+~52 consolidated tools for desktop (WPF, WinForms, Win32), browser (Chrome/Edge via CDP),
+and system management — accessible to AI agents over MCP, **or driven directly from the
+command line (`winwright call …`) when MCP is blocked**.
 
 ## Describe tests in plain English — the AI agent does the rest
 
@@ -38,6 +39,7 @@ Why this matters:
 - [Quick Start](#quick-start)
 - [Install](#install)
 - [MCP Client Configuration](#mcp-client-configuration)
+- [CLI Mode (when MCP is blocked)](#cli-mode-when-mcp-is-blocked)
 - [Use Cases](#use-cases)
 - [Tools](#tools)
 - [Configuration](#configuration)
@@ -69,7 +71,7 @@ you describe the goal in plain language.
 
 From inside Claude Code, add the marketplace and install:
 
-```
+```text
 /plugin marketplace add civyk-official/civyk-winwright
 /plugin install winwright@civyk-winwright
 ```
@@ -129,6 +131,32 @@ Start the server first: `Civyk.WinWright.Mcp.exe serve --port 8765`
     }
   }
 }
+```
+
+## CLI Mode (when MCP is blocked)
+
+Many corporate environments block MCP. WinWright can be driven **entirely from the command line**
+instead — the same tools, the same automation, with **no MCP client** between the agent and the
+tool. A background daemon (a loopback `serve` instance) owns the live sessions, so the `appId`
+returned by `ww_launch` stays valid across separate commands.
+
+```bash
+winwright tools                          # discover the tool surface (replaces MCP advertisement)
+winwright call ww_launch --exePath "C:\Apps\MyApp.exe"   # -> {"appId":"app-1", ...}
+winwright call ww_click  --appId app-1 --selector "#submit"
+winwright call ww_get_value --appId app-1 --selector "#status"
+winwright call ww_close  --appId app-1
+```
+
+JSON results go to stdout (safe to pipe to `jq`); diagnostics go to stderr. The daemon auto-starts
+on the first `call`, binds to loopback only, and self-exits when idle.
+
+Because the CLI doesn't advertise its capabilities the way MCP does, install the bundled **Claude
+Code skill** so an agent knows how to use it — embedded in the binary, so it installs **offline**:
+
+```bash
+winwright skills install --scope user      # -> %USERPROFILE%\.claude\skills\winwright\
+winwright skills install --scope project   # -> <cwd>\.claude\skills\winwright\
 ```
 
 ## Use Cases
@@ -196,17 +224,17 @@ after every click. Handle or dismiss them without breaking the automation flow.
 
 ## Tools
 
-~59 consolidated tools across five categories (merged from 110 via action/mode parameters):
+~52 consolidated tools across five categories (merged from 110+ via action/mode parameters):
 
 | Category | Tools | What it does |
 |----------|-------|-------------|
-| **Desktop Automation** | ~30 | Launch apps, click, type, read values, screenshots, tree navigation, dialogs, test case recording, CI script export (UIA3) |
+| **Desktop Automation** | ~26 | Launch apps, click, type, read values, screenshots, tree navigation, grids (`ww_grid`), dialogs (`ww_dialog`), windows (`ww_window`), test case recording, CI script export (UIA3) |
 | **System** | ~12 | Processes, registry, environment variables, file system, network, services, scheduled tasks |
 | **Browser** | 4 | Chrome/Edge via CDP — sessions, pages, elements, advanced (eval/forms/dialogs). No Selenium dependency |
-| **AI Agent** | ~10 | Snapshots, state diffing, event watching, action recording, `ww_get_schema` for tool discovery |
+| **AI Agent** | ~8 | Semantic snapshots & state diffing (`ww_snapshot`), element inspection (`ww_inspect`), event watching, action recording, `ww_get_schema` for tool discovery |
 | **Security** | — | Runtime permission guards with AD group overrides, JSONL audit logging |
 
-Each tool supports multiple actions via an `action` parameter (e.g., `ww_service(action="list")`, `ww_service(action="start")`), reducing the total tool count while maintaining full functionality.
+Each tool supports multiple actions via an `action` parameter (e.g., `ww_service(action="list")`, `ww_snapshot(action="get")`), reducing the total tool count while maintaining full functionality. Discover the live surface anytime with `winwright tools`.
 
 ## Configuration
 
@@ -239,6 +267,10 @@ All dangerous operations are disabled by default. Enable only what you need.
 ```text
 winwright mcp                                    Start MCP server (stdio)
 winwright serve --port N                         Start MCP server (HTTP, default 8765)
+winwright tools [--json|<name>]                  List the tool surface (CLI discovery; no MCP client needed)
+winwright call <tool> [--param value …]          Invoke one tool via the local daemon (CLI automation)
+winwright daemon <start|stop|status>             Control the background host that owns CLI sessions
+winwright skills <install|list|uninstall>        Install the bundled Claude Code skill (offline)
 winwright run <script.json> [--format text|junit] [--output <file>]
                                                  Replay a recorded automation script
 winwright heal <script.json> [--app <path>|--pid <n>] [--output <file>] [--min-confidence <0-1>]

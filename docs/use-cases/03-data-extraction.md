@@ -68,8 +68,8 @@ Response:
 #### Read the first batch of rows
 
 ```json
-ww_get_table_data
-  { "appId": "app-5e6f", "handleId": "h-7a8b",
+ww_grid
+  { "action": "get_table", "appId": "app-5e6f", "handleId": "h-7a8b",
     "columns": ["Date", "Invoice No", "Amount", "Status"],
     "rowFrom": 0, "rowTo": 199 }
 ```
@@ -108,8 +108,8 @@ Response:
 #### Read the next batch
 
 ```json
-ww_get_table_data
-  { "appId": "app-5e6f", "handleId": "h-7a8b",
+ww_grid
+  { "action": "get_table", "appId": "app-5e6f", "handleId": "h-7a8b",
     "columns": ["Date", "Invoice No", "Amount", "Status"],
     "rowFrom": 0, "rowTo": 199 }
 ```

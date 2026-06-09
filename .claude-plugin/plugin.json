@@ -1,7 +1,7 @@
 {
   "name": "winwright",
-  "description": "Playwright-style MCP server for Windows desktop, system, and browser automation. ~59 consolidated tools for WPF, WinForms, Win32, Chrome/Edge via Model Context Protocol.",
-  "version": "2.0.0",
+  "description": "Playwright-style automation for Windows desktop, system, and browser — usable as an MCP server or fully from the CLI (winwright call) when MCP is blocked. ~52 consolidated tools for WPF, WinForms, Win32, Chrome/Edge.",
+  "version": "3.0.0",
   "author": {
     "name": "Civyk",
     "email": "support@civyk.com"
