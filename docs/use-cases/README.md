@@ -56,12 +56,14 @@ Create `winwright.json` next to the binary to enable non-default capabilities:
 
 ```json
 {
-  "permissions": {
-    "allowShell": false,
-    "allowRegistryWrite": false,
-    "allowProcessKill": false,
-    "allowFileWrite": false,
-    "allowServiceControl": false
+  "WinWright": {
+    "Permissions": {
+      "AllowShell": false,
+      "AllowRegistryWrite": false,
+      "AllowProcessKill": false,
+      "AllowFileWrite": false,
+      "AllowServiceControl": false
+    }
   }
 }
 ```

@@ -238,29 +238,39 @@ Each tool supports multiple actions via an `action` parameter (e.g., `ww_service
 
 ## Configuration
 
-Create `winwright.json` next to the binary (or `%APPDATA%\WinWright\winwright.json`):
+Create `winwright.json` next to the binary (or `%APPDATA%\WinWright\winwright.json`).
+All settings live under a top-level `WinWright` section:
 
 ```json
 {
-  "permissions": {
-    "allowShell": false,
-    "allowRegistryWrite": false,
-    "allowProcessKill": false,
-    "allowFileWrite": false,
-    "allowServiceControl": false,
-    "allowTaskScheduler": false,
-    "allowEnvironmentWrite": false,
-    "allowBrowserEval": false,
-    "allowNetworkProbe": true
-  },
-  "audit": {
-    "enabled": true,
-    "logPath": "audit.jsonl"
+  "WinWright": {
+    "Permissions": {
+      "AllowShell": false,
+      "AllowProcessKill": false,
+      "AllowRegistryWrite": false,
+      "AllowFileWrite": false,
+      "AllowServiceControl": false,
+      "AllowTaskScheduler": false,
+      "AllowPower": false,
+      "AllowLockScreen": false,
+      "AllowMachineEnv": false,
+      "AllowBrowserEval": false,
+      "AllowNetworkProbe": true,
+      "AllowFileRead": true
+    },
+    "Audit": {
+      "Enabled": true,
+      "RetentionDays": 30
+    }
   }
 }
 ```
 
-All dangerous operations are disabled by default. Enable only what you need.
+All destructive operations are disabled by default — enable only what you need.
+`AllowNetworkProbe` (ping/DNS) and `AllowFileRead` (`ww_file` read/list) are the only
+default-`true` permissions; both are read-only, and worth setting to `false` when serving
+over HTTP to remote clients. Gated calls are audit-logged to daily-rotated
+`audit-YYYY-MM-DD.jsonl` files.
 
 ## CLI
 
@@ -271,10 +281,11 @@ winwright tools [--json|<name>]                  List the tool surface (CLI disc
 winwright call <tool> [--param value …]          Invoke one tool via the local daemon (CLI automation)
 winwright daemon <start|stop|status>             Control the background host that owns CLI sessions
 winwright skills <install|list|uninstall>        Install the bundled Claude Code skill (offline)
-winwright run <script.json> [--format text|junit] [--output <file>]
+winwright run <script.json> [--format text|junit] [--output <file>] [--screenshots [--screenshots-dir <dir>]]
                                                  Replay a recorded automation script
-winwright heal <script.json> [--app <path>|--pid <n>] [--output <file>] [--min-confidence <0-1>]
+winwright heal <script.json> [--output <file>] [--min-confidence <0-1>]
                                                  Probe broken selectors against a live UI and repair them
+                                                 (launches/attaches using the script's own metadata)
 winwright inspect <pid>                          Dump UIA element tree for a process
 winwright doctor                                 Verify environment prerequisites
 ```

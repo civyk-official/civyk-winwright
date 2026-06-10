@@ -5,6 +5,110 @@ All notable changes to WinWright will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-06-10
+
+Hardening and correctness release from a full-codebase deep review: replay/live security
+guard parity, a new read-side file permission, ~30 correctness and robustness fixes, a
+Caps Lock typing fix, performance quick wins, and a complete documentation sync against the
+v3.0.0 tool surface. No breaking changes — recorded scripts and the agent-facing tool
+surface are unchanged.
+
+### Security
+
+- **Replay guard parity**: `winwright run` now enforces the same safeguards as the live
+  tools — protected-process kill guard (`lsass`, `csrss`, …), protected registry write-path
+  guard for value deletion, and shell-metacharacter rejection for scheduled-task commands.
+- New **`AllowFileRead`** permission gates `ww_file` read/list (default `true` — read-only,
+  no behaviour change; revoke it in HTTP serve mode so authenticated clients cannot read
+  `winwright.json`/audit logs). Single reads are capped at 10 MB of content, and successful
+  reads/lists are now audit-logged.
+- `ww_process(action="kill", name=…)` trims a trailing `".exe"` — it previously slipped past
+  the protected-process guard AND matched no process at all (Windows process names exclude
+  extensions); same normalization during replay.
+- `winwright serve` warns at startup when `AllowNetworkProbe`/`AllowFileRead` are enabled on
+  a non-loopback bind; the TLS log line no longer prints the full certificate path; audited
+  shell commands are truncated to 200 chars; `ww_env(action="set")` audits only the gated
+  Machine/User targets; audit flush errors no longer echo exception detail to stderr.
+- `JsStringEscaper` additionally escapes `"` and U+0085; `skills install --dir` paths are
+  canonicalized.
+
+### Fixed
+
+- **`ww_type` corrupted text when Caps Lock was on** — virtual-key injection derives shift
+  state from `VkKeyScan`, which assumes Caps Lock off, so "MSFT" arrived as "msft" and
+  "Hello" as "hELLO". `ww_type` now neutralises Caps Lock for the duration of the type and
+  restores the user's state afterwards (whole sequences are serialized so concurrent types
+  cannot interleave toggles). Proven by replaying the WPF regression suite with Caps Lock
+  forced on: 66/66 steps (was 63/66).
+- **Replay `dns_resolve` always threw** — the dispatcher read `hostname` where the recorder
+  writes `host` (legacy `hostname` still accepted).
+- **Fingerprint healing candidate #2 never matched** — it used invalid `[controlType=…]`
+  selector syntax that failed compilation and was silently swallowed; now `type=X[name=…]`.
+- **`ww_assert` value assertions errored on non-regex expected strings** (e.g.
+  `value_contains` with `"C++ (x86)"`) because the regex was evaluated eagerly for every
+  assertion type; an invalid pattern for `value_matches_regex` now returns
+  `invalid_argument` with a clear message.
+- **Record/replay assertion drift**: invalid regex patterns in replayed assertions were
+  silently treated as non-matches; both paths now share `AssertionOperator` and raise a
+  clear error. Note: in `winwright run` an existing script step with an invalid regex
+  pattern now reports as a JUnit `<error>` (broken test) instead of a silent `<failure>` —
+  CI gates that count only failures will see the change.
+- **Generic parameter errors now return `invalid_argument`** (bad regex pattern, missing
+  `pid`/`name`, …); they were previously mislabelled `selector_invalid`, sending agents off
+  fixing selectors when a parameter was at fault. Selector syntax errors still return
+  `selector_invalid`.
+- Launching/attaching to a process that dies immediately now fails with
+  `process_died_on_start` / `process_not_found` instead of returning a successful-looking
+  result whose `appId` never resolves; a related race that permanently leaked session
+  slots is fixed.
+- `LocatorEngine` regex filters now use the pre-compiled, ReDoS-time-boxed regex from the
+  selector compiler instead of re-interpreting the pattern per candidate element.
+- `ww_snapshot(includeOptions=true)` no longer duplicates the expanded ComboBox dropdown
+  subtree, and BFS queue memory is bounded.
+- `CdpClient` teardown race that could leave a concurrent request hanging for its full 30 s
+  timeout; replay notification helper drains stderr (pipe-buffer deadlock);
+  dialog-replay 3 s timers are linked to the outer cancellation token.
+- `winwright call` honours Ctrl+C (exit 130) while waiting for the daemon and during the
+  tool call; daemon identity check derives the executable name from `Environment.ProcessPath`.
+- `UiaDispatchThread` fails fast (30 s bounded enqueue) instead of blocking callers forever
+  when the STA queue is saturated; `EventWatcher` explicitly unregisters its UIA handlers on
+  dispose (including the global focus-changed subscription), pre-filters foreign-process
+  focus events before queueing STA work, and exposes `DroppedEventCount`.
+- `AuditLogger` retry buffer is bounded (10k entries); `BrowserRegistry` validates the CDP
+  port for direct callers and logs session-dispose failures; retry backoff gained ±20 % jitter.
+
+### Performance
+
+- **FlaUI `CacheRequest` batching in the snapshot/hash engines** — the `ww_snapshot` BFS and
+  state hashing now fetch children plus all snapshot-relevant properties in one
+  cross-process round-trip per find instead of ~5–8 individual COM calls (~1 ms each) per
+  element, and label resolution reuses the sibling batch already in hand. Traversal and
+  hash semantics are unchanged — verified with a full-field golden diff against the previous
+  engine (identical) and stable hashes on the same live UI. Measured ~2× end-to-end on
+  `ww_snapshot(action="get")` on a small 55-element tree (including fixed transport
+  overhead, so the engine-level gain is larger); the benefit grows with tree size.
+- Removed per-row `ColumnCount` reads in grid extraction, quadruple `BoundingRectangle`
+  reads in `ww_inspect(action="attribute")`, per-call JPEG encoder lookup and an extra
+  image-buffer copy per screenshot, per-message string allocation in the CDP receive loop,
+  and per-poll regex re-interpretation in `ww_wait(mode="value")`.
+
+### Documentation
+
+- Full documentation sync against the live tool surface: `winwright heal` / `ww_heal_script`
+  documented, security-model description corrected, `AllowNetworkProbe`/`AllowFileRead` in
+  all permission tables, CLI command tables completed, stale counts/TFMs fixed, and a new
+  "Troubleshooting — Known UIA Quirks" guide section.
+- ~150 tool calls across the regression suites and showcase converted from
+  pre-consolidation tool names — the suites were not executable as written.
+
+### Verification
+
+- Build clean (`dotnet build -warnaserror`, net8 + net9); **587 unit tests pass**.
+- Regression replay: **3/3 scripts pass** — 150 steps, 0 failures; `01-wpf` additionally
+  re-run with Caps Lock forced on (66/66) to prove the `ww_type` fix.
+- Snapshot engine golden diff vs the previous implementation: identical 55-node output;
+  hashes deterministic.
+
 ## [3.0.0] - 2026-06-09
 
 Adds a first-class **CLI mode** for environments where MCP is blocked, an **installable

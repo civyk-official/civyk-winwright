@@ -30,27 +30,34 @@ Create `winwright.json` next to the binary on the remote machine:
 
 ```json
 {
-  "permissions": {
-    "allowShell": false,
-    "allowProcessKill": true,
-    "allowServiceControl": true,
-    "allowRegistryWrite": false,
-    "allowFileWrite": false
-  },
-  "remoteAccess": {
-    "allowedIpRanges": ["192.168.1.0/24", "10.0.0.5"],
-    "requireAuthentication": true,
-    "requiredAdGroups": ["DOMAIN\\WinWrightAdmins"],
-    "maxSessionsPerUser": 3,
-    "enableRateLimit": true,
-    "rateLimitPerMinute": 120
-  },
-  "audit": {
-    "enabled": true,
-    "retentionDays": 30
+  "WinWright": {
+    "Permissions": {
+      "AllowShell": false,
+      "AllowProcessKill": true,
+      "AllowServiceControl": true,
+      "AllowRegistryWrite": false,
+      "AllowFileWrite": false,
+      "AllowFileRead": false,
+      "AllowNetworkProbe": false
+    },
+    "RemoteAccess": {
+      "IpAllowlist": ["192.168.1.0/24", "10.0.0.5"],
+      "RequireAuthentication": true,
+      "RequiredAdGroups": ["DOMAIN\\WinWrightAdmins"],
+      "MaxSessionsPerUser": 3,
+      "MaxRequestsPerMinute": 120
+    },
+    "Audit": {
+      "Enabled": true,
+      "RetentionDays": 30
+    }
   }
 }
 ```
+
+> `AllowFileRead` and `AllowNetworkProbe` default to `true` (read-only convenience for local
+> use) — set them to `false` for remote deployments so authenticated clients cannot read
+> server files or probe the internal network.
 
 **Security layers active in this config:**
 
@@ -59,7 +66,7 @@ Create `winwright.json` next to the binary on the remote machine:
 | R1: IP allowlist | Only `192.168.1.0/24` subnet and `10.0.0.5` can connect |
 | R2: Windows Negotiate | NTLM/Kerberos auth — captures `DOMAIN\user` identity |
 | R3: AD group | Caller must be in `DOMAIN\WinWrightAdmins` |
-| R4: Rate limiting | 120 calls/minute per authenticated user |
+| R4: Rate limiting | 120 requests/minute per client IP (fixed window) |
 | R5: Per-user limit | Max 3 concurrent sessions per user |
 | Audit | Every call logged to `audit-YYYY-MM-DD.jsonl` |
 
